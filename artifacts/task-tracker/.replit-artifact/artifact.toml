@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "Task & Payment Tracker"
+version = "1.0.0"
+id = "artifacts/task-tracker"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 19636
+
+[services.development]
+run = "pnpm --filter @workspace/task-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/task-tracker", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/task-tracker", "run", "serve" ]
+
+[services.env]
+PORT = "19636"
+BASE_PATH = "/"
