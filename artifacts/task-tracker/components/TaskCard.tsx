@@ -1,14 +1,50 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
-import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Task, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
+import {
+  deadlineAccentColor,
+  getDeadlineState,
+  humanDeadline,
+} from "@/utils/deadline";
 
 function rupeeFormat(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
+}
+
+function PulsingDot({ color }: { color: string }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(scale, { toValue: 1.6, duration: 700, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(scale, { toValue: 1, duration: 700, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.pulsingDot,
+        { backgroundColor: color, transform: [{ scale }], opacity },
+      ]}
+    />
+  );
 }
 
 export default function TaskCard({ task }: { task: Task }) {
@@ -18,6 +54,11 @@ export default function TaskCard({ task }: { task: Task }) {
   const outstandingDue = task.total_amount - task.paid_amount;
   const collectionRatio =
     task.total_amount > 0 ? (task.paid_amount / task.total_amount) * 100 : 0;
+
+  const deadlineState = getDeadlineState(task.deadline_at);
+  const isOverdue = deadlineState === "overdue" && !task.work_done;
+  const isUrgent = deadlineState === "urgent" && !task.work_done;
+  const deadlineColor = deadlineAccentColor(deadlineState);
 
   const toggleWorkDone = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -57,19 +98,33 @@ export default function TaskCard({ task }: { task: Task }) {
 
   const thumbnailUri = task.image_uris?.[0];
 
+  const leftBorderColor = isOverdue
+    ? "#CD7F32"
+    : task.work_done
+    ? colors.success
+    : task.payment_received
+    ? colors.champagne
+    : colors.mutedForeground;
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.card,
         {
           backgroundColor: colors.card,
-          borderColor: colors.goldBorder,
-          borderLeftColor: task.work_done ? colors.success : task.payment_received ? colors.champagne : colors.mutedForeground,
+          borderColor: isOverdue ? "#CD7F3233" : colors.goldBorder,
+          borderLeftColor: leftBorderColor,
           transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
       onPress={() => router.push(`/task/${task.id}`)}
     >
+      {isUrgent && !isOverdue && (
+        <View style={styles.pulsingDotWrap}>
+          <PulsingDot color={colors.gold} />
+        </View>
+      )}
+
       <View style={styles.topRow}>
         {thumbnailUri ? (
           <Image
@@ -93,12 +148,26 @@ export default function TaskCard({ task }: { task: Task }) {
                 {rupeeFormat(task.total_amount)}
               </Text>
             </Text>
-            {outstandingDue > 0 && !task.payment_received && (
+            {isOverdue && (
+              <Text style={[styles.amountNote, { color: "#CD7F32", fontFamily: "Inter_600SemiBold" }]}>
+                Overdue
+              </Text>
+            )}
+            {!isOverdue && outstandingDue > 0 && !task.payment_received && (
               <Text style={[styles.amountNote, { color: colors.champagne }]}>
                 Due {rupeeFormat(outstandingDue)}
               </Text>
             )}
           </View>
+
+          {task.deadline_at && !task.work_done && (
+            <View style={styles.deadlineRow}>
+              <Feather name="clock" size={10} color={deadlineColor} strokeWidth={1.5} />
+              <Text style={[styles.deadlineLabel, { color: deadlineColor }]}>
+                {humanDeadline(task.deadline_at)}
+              </Text>
+            </View>
+          )}
         </View>
 
         <Pressable
@@ -192,6 +261,19 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     marginBottom: 10,
     gap: 10,
+    position: "relative",
+    overflow: "hidden",
+  },
+  pulsingDotWrap: {
+    position: "absolute",
+    top: 10,
+    right: 38,
+    zIndex: 10,
+  },
+  pulsingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   topRow: {
     flexDirection: "row",
@@ -220,10 +302,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     flexWrap: "wrap",
+    alignItems: "center",
   },
   amountNote: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
+  },
+  deadlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  deadlineLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
   },
   progressRail: {
     height: 1.5,

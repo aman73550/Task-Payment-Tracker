@@ -17,6 +17,7 @@ import BulkAddModal from "@/components/BulkAddModal";
 import SummaryHeader from "@/components/SummaryHeader";
 import TaskCard from "@/components/TaskCard";
 import { useTasks } from "@/context/TasksContext";
+import { useDeadlineNotifications } from "@/hooks/useDeadlineNotifications";
 import { useColors } from "@/hooks/useColors";
 
 export default function HomeScreen() {
@@ -26,6 +27,8 @@ export default function HomeScreen() {
   const [showAdd, setShowAdd] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [fabExpanded, setFabExpanded] = useState(false);
+
+  useDeadlineNotifications(tasks);
 
   const topPad = Platform.OS === "web" ? 67 : 0;
   const bottomPad = Platform.OS === "web" ? 34 + 50 : insets.bottom + 84;

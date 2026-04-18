@@ -19,8 +19,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import DeadlinePicker from "@/components/DeadlinePicker";
 import { HistoryEntry, TaskStatus, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
+import { getDeadlineState, humanDeadline } from "@/utils/deadline";
 
 const STATUS_OPTIONS: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 
@@ -52,6 +54,9 @@ export default function TaskDetailScreen() {
     taskEntry?.status ?? "Pending"
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [deadlineAt, setDeadlineAt] = useState<string | undefined>(
+    taskEntry?.deadline_at
+  );
 
   const [addonNote, setAddonNote] = useState("");
   const [addonLink, setAddonLink] = useState("");
@@ -140,7 +145,7 @@ export default function TaskDetailScreen() {
     );
     await updateTask(
       taskEntry.id,
-      { paid_amount: confirmedPaid, status: selectedStatus },
+      { paid_amount: confirmedPaid, status: selectedStatus, deadline_at: deadlineAt },
       {
         date: new Date().toISOString(),
         note: `Payment updated to ${rupeeFormat(confirmedPaid)} — status: ${selectedStatus}`,
@@ -358,6 +363,13 @@ export default function TaskDetailScreen() {
               </Text>
             </Pressable>
           )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>DEADLINE</Text>
+          <View style={[styles.inputField, { backgroundColor: colors.card, borderColor: deadlineAt ? colors.champagne : colors.goldBorder, paddingVertical: 4 }]}>
+            <DeadlinePicker value={deadlineAt} onChange={setDeadlineAt} />
+          </View>
         </View>
 
         <Pressable

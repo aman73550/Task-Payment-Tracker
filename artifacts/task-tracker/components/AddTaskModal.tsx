@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 
+import DeadlinePicker from "@/components/DeadlinePicker";
 import { TaskStatus } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -43,6 +44,7 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
   const [slipImageUri, setSlipImageUri] = useState<string | undefined>();
   const [taskNote, setTaskNote] = useState("");
   const [pickingPhoto, setPickingPhoto] = useState(false);
+  const [deadlineAt, setDeadlineAt] = useState<string | undefined>();
 
   const resetForm = () => {
     setTaskName("");
@@ -51,6 +53,7 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
     setSelectedStatus("Pending");
     setSlipImageUri(undefined);
     setTaskNote("");
+    setDeadlineAt(undefined);
   };
 
   const handleCancel = () => {
@@ -93,6 +96,7 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
       payment_received: selectedStatus === "Completed" && totalReceived >= totalBilled,
       image_uris: slipImageUri ? [slipImageUri] : [],
       notes: taskNote.trim() || undefined,
+      deadline_at: deadlineAt,
     });
     resetForm();
     onClose();
@@ -230,6 +234,13 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
           </View>
 
           <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>DEADLINE (OPTIONAL)</Text>
+            <View style={[styles.deadlineWrapper, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+              <DeadlinePicker value={deadlineAt} onChange={setDeadlineAt} />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>NOTES (OPTIONAL)</Text>
             <TextInput
               style={[
@@ -357,5 +368,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     alignSelf: "flex-end",
+  },
+  deadlineWrapper: {
+    borderWidth: 0.5,
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
   },
 });

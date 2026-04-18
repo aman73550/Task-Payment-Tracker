@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
+import DeadlinePicker from "@/components/DeadlinePicker";
 import {
   ActivityIndicator,
   Image,
@@ -33,6 +34,7 @@ interface RowState {
   task_name: string;
   total_amount: string;
   image_uri?: string;
+  deadline_at?: string;
 }
 
 function newRow(): RowState {
@@ -107,6 +109,7 @@ export default function BulkAddModal({ visible, onClose, onSaveAll }: BulkAddMod
       task_name: r.task_name.trim(),
       total_amount: parseFloat(r.total_amount),
       image_uri: r.image_uri,
+      deadline_at: r.deadline_at,
     }));
 
     setProgress({ done: 0, total: taskRows.length });
@@ -255,6 +258,17 @@ export default function BulkAddModal({ visible, onClose, onSaveAll }: BulkAddMod
                   </Pressable>
                 )}
               </Pressable>
+
+              <View style={[styles.deadlineBulkWrapper, { backgroundColor: colors.secondary, borderColor: colors.goldBorder }]}>
+                <DeadlinePicker
+                  value={row.deadline_at}
+                  onChange={(v) =>
+                    setRows((prev) =>
+                      prev.map((r) => (r.id === row.id ? { ...r, deadline_at: v } : r))
+                    )
+                  }
+                />
+              </View>
             </View>
           ))}
 
@@ -395,5 +409,11 @@ const styles = StyleSheet.create({
   addRowLabel: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
+  },
+  deadlineBulkWrapper: {
+    borderWidth: 0.5,
+    borderRadius: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
   },
 });

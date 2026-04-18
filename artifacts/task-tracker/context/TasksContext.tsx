@@ -26,6 +26,7 @@ export interface Task {
   payment_received: boolean;
   image_uris: string[];
   notes?: string;
+  deadline_at?: string;
   history: HistoryEntry[];
   created_at: string;
 }
@@ -34,6 +35,7 @@ export interface BulkTaskRow {
   task_name: string;
   total_amount: number;
   image_uri?: string;
+  deadline_at?: string;
 }
 
 interface TasksContextType {
@@ -138,6 +140,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           work_done: false,
           payment_received: false,
           image_uris: row.image_uri ? [row.image_uri] : [],
+          deadline_at: row.deadline_at,
           history: [{ date: new Date().toISOString(), note: "Task created via bulk entry" }],
           created_at: new Date().toISOString(),
         };
