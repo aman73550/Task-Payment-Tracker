@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -23,12 +23,12 @@ import { useColors } from "@/hooks/useColors";
 
 const STATUS_OPTIONS: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 
-function formatCurrency(amount: number) {
-  return `₹${amount.toLocaleString("en-IN")}`;
+function rupeeFormat(value: number) {
+  return `₹${value.toLocaleString("en-IN")}`;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
+function humanDate(isoString: string) {
+  return new Date(isoString).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -43,263 +43,290 @@ export default function TaskDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const task = getTask(id);
+  const taskEntry = getTask(id);
 
-  const [paidAmount, setPaidAmount] = useState(task?.paid_amount.toString() ?? "0");
-  const [status, setStatus] = useState<TaskStatus>(task?.status ?? "Pending");
-  const [noteInput, setNoteInput] = useState("");
-  const [imageUri, setImageUri] = useState<string | undefined>(task?.image_uri);
-  const [saving, setSaving] = useState(false);
+  const [paidAmountInput, setPaidAmountInput] = useState(taskEntry?.paid_amount.toString() ?? "0");
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus>(taskEntry?.status ?? "Pending");
+  const [updateNote, setUpdateNote] = useState("");
+  const [slipImageUri, setSlipImageUri] = useState<string | undefined>(taskEntry?.image_uri);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (task) {
-      setPaidAmount(task.paid_amount.toString());
-      setStatus(task.status);
-      setImageUri(task.image_uri);
+    if (taskEntry) {
+      setPaidAmountInput(taskEntry.paid_amount.toString());
+      setSelectedStatus(taskEntry.status);
+      setSlipImageUri(taskEntry.image_uri);
     }
-  }, [task?.id]);
+  }, [taskEntry?.id]);
 
-  if (!task) {
+  if (!taskEntry) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.notFound, { color: colors.mutedForeground }]}>Task not found</Text>
+        <Text style={[styles.missingText, { color: colors.mutedForeground }]}>
+          Couldn't find this task. It may have been deleted.
+        </Text>
       </View>
     );
   }
 
-  const remaining = task.total_amount - (parseFloat(paidAmount) || 0);
-  const progress =
-    task.total_amount > 0
-      ? ((parseFloat(paidAmount) || 0) / task.total_amount) * 100
-      : 0;
+  const outstandingDue = taskEntry.total_amount - (parseFloat(paidAmountInput) || 0);
+  const collectionRatio = taskEntry.total_amount > 0
+    ? ((parseFloat(paidAmountInput) || 0) / taskEntry.total_amount) * 100
+    : 0;
 
-  const handlePickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
+  const pickSlipPhoto = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) return;
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.7,
     });
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
+    if (!pickerResult.canceled && pickerResult.assets[0]) {
+      setSlipImageUri(pickerResult.assets[0].uri);
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    const paid = Math.min(parseFloat(paidAmount) || 0, task.total_amount);
-    const note = noteInput.trim();
+  const saveChanges = async () => {
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const confirmedPaid = Math.min(parseFloat(paidAmountInput) || 0, taskEntry.total_amount);
+    const enteredNote = updateNote.trim();
     await updateTask(
-      task.id,
-      {
-        paid_amount: paid,
-        status,
-        image_uri: imageUri,
-      },
-      note || `Updated: Paid ₹${paid}, Status: ${status}`
+      taskEntry.id,
+      { paid_amount: confirmedPaid, status: selectedStatus, image_uri: slipImageUri },
+      enteredNote || `Payment updated to ${rupeeFormat(confirmedPaid)} — status: ${selectedStatus}`
     );
-    setNoteInput("");
-    setSaving(false);
+    setUpdateNote("");
+    setIsSaving(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
   };
 
-  const handleDelete = () => {
-    Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteTask(task.id);
-          router.back();
+  const confirmDelete = () => {
+    Alert.alert(
+      "Delete this task?",
+      "This can't be undone. All payment history for this task will be lost.",
+      [
+        { text: "Keep it", style: "cancel" },
+        {
+          text: "Yes, delete it",
+          style: "destructive",
+          onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            await deleteTask(taskEntry.id);
+            router.back();
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
-  const handleWhatsApp = () => {
-    const paid = parseFloat(paidAmount) || 0;
-    const rem = task.total_amount - paid;
-    const message = `Task: ${task.task_name} | Status: ${status} | Total: ${formatCurrency(task.total_amount)} | Paid: ${formatCurrency(paid)} | Pending: ${formatCurrency(rem)}`;
-    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+  const shareOnWhatsApp = () => {
+    const confirmedPaid = parseFloat(paidAmountInput) || 0;
+    const shareMessage = `Task: ${taskEntry.task_name} | Status: ${selectedStatus} | Total: ${rupeeFormat(taskEntry.total_amount)} | Paid: ${rupeeFormat(confirmedPaid)} | Pending: ${rupeeFormat(taskEntry.total_amount - confirmedPaid)}`;
+    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`);
   };
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.screen, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color={colors.foreground} />
+      <View style={[styles.topBar, { borderBottomColor: colors.goldBorder }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Feather name="arrow-left" size={21} color={colors.pearl} strokeWidth={1.5} />
         </Pressable>
-        <Text style={[styles.topTitle, { color: colors.gold }]} numberOfLines={1}>
-          {task.task_name}
+        <Text style={[styles.topBarTitle, { color: colors.gold }]} numberOfLines={1}>
+          {taskEntry.task_name}
         </Text>
-        <Pressable onPress={handleDelete} style={styles.backBtn}>
-          <Feather name="trash-2" size={18} color={colors.destructive} />
+        <Pressable
+          onPress={confirmDelete}
+          style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Feather name="trash-2" size={18} color={colors.destructive} strokeWidth={1.5} />
         </Pressable>
       </View>
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 20 }]}
+        style={styles.scrollArea}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 24 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.amountRow}>
-            <View style={styles.amountItem}>
-              <Text style={[styles.amountLabel, { color: colors.mutedForeground }]}>TOTAL</Text>
-              <Text style={[styles.amountValue, { color: colors.foreground }]}>
-                {formatCurrency(task.total_amount)}
+        <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+          <View style={styles.summaryAmounts}>
+            <View style={styles.summaryAmountBlock}>
+              <Text style={[styles.summaryAmountLabel, { color: colors.mutedForeground }]}>Total Billed</Text>
+              <Text style={[styles.summaryAmountFigure, { color: colors.pearl }]}>
+                {rupeeFormat(taskEntry.total_amount)}
               </Text>
             </View>
-            <View style={styles.amountItem}>
-              <Text style={[styles.amountLabel, { color: colors.mutedForeground }]}>REMAINING</Text>
-              <Text
-                style={[
-                  styles.amountValue,
-                  { color: remaining > 0 ? colors.gold : colors.success },
-                ]}
-              >
-                {formatCurrency(Math.max(remaining, 0))}
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.summaryAmountBlock}>
+              <Text style={[styles.summaryAmountLabel, { color: colors.mutedForeground }]}>Still Owed</Text>
+              <Text style={[
+                styles.summaryAmountFigure,
+                { color: outstandingDue > 0 ? colors.champagne : colors.success }
+              ]}>
+                {rupeeFormat(Math.max(outstandingDue, 0))}
               </Text>
             </View>
           </View>
 
-          <View style={styles.progressRow}>
-            <View style={[styles.progressBg, { backgroundColor: colors.secondary }]}>
+          <View style={styles.progressSection}>
+            <View style={[styles.progressRail, { backgroundColor: colors.secondary }]}>
               <View
                 style={[
                   styles.progressFill,
                   {
-                    width: `${Math.min(progress, 100)}%` as any,
-                    backgroundColor: progress >= 100 ? colors.success : colors.gold,
+                    width: `${Math.min(collectionRatio, 100)}%` as any,
+                    backgroundColor: collectionRatio >= 100 ? colors.success : colors.gold,
                   },
                 ]}
               />
             </View>
-            <Text style={[styles.progressText, { color: colors.mutedForeground }]}>
-              {Math.round(progress)}%
+            <Text style={[styles.progressRatioLabel, { color: colors.mutedForeground }]}>
+              {Math.round(collectionRatio)}% received
             </Text>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>UPDATE PAID AMOUNT (₹)</Text>
+        <View style={styles.formSection}>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>HOW MUCH HAVE YOU RECEIVED? (₹)</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
-            value={paidAmount}
-            onChangeText={setPaidAmount}
+            style={[styles.textField, { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }]}
+            value={paidAmountInput}
+            onChangeText={setPaidAmountInput}
             keyboardType="numeric"
-            placeholder="0"
+            placeholder="Enter amount received"
             placeholderTextColor={colors.mutedForeground}
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>STATUS</Text>
-          <View style={styles.statusRow}>
-            {STATUS_OPTIONS.map((s) => (
+        <View style={styles.formSection}>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>WHERE DOES THIS TASK STAND?</Text>
+          <View style={styles.statusOptions}>
+            {STATUS_OPTIONS.map((statusOption) => (
               <Pressable
-                key={s}
-                style={[
-                  styles.statusChip,
+                key={statusOption}
+                style={({ pressed }) => [
+                  styles.statusOption,
                   {
-                    backgroundColor: status === s ? colors.gold : colors.card,
-                    borderColor: status === s ? colors.gold : colors.border,
+                    backgroundColor: selectedStatus === statusOption ? colors.gold : colors.card,
+                    borderColor: selectedStatus === statusOption ? colors.gold : colors.goldBorder,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
                   },
                 ]}
-                onPress={() => setStatus(s)}
+                onPress={() => {
+                  setSelectedStatus(statusOption);
+                  Haptics.selectionAsync();
+                }}
               >
-                <Text
-                  style={[
-                    styles.statusText,
-                    { color: status === s ? colors.primaryForeground : colors.mutedForeground },
-                  ]}
-                >
-                  {s}
+                <Text style={[
+                  styles.statusOptionText,
+                  { color: selectedStatus === statusOption ? colors.primaryForeground : colors.mutedForeground }
+                ]}>
+                  {statusOption}
                 </Text>
               </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>SLIP / PHOTO</Text>
+        <View style={styles.formSection}>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>PAYMENT SLIP</Text>
           <Pressable
-            style={[styles.imagePicker, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={handlePickImage}
+            style={[styles.slipPickerArea, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+            onPress={pickSlipPhoto}
           >
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+            {slipImageUri ? (
+              <Image source={{ uri: slipImageUri }} style={styles.slipPreview} />
             ) : (
-              <View style={styles.imagePlaceholder}>
-                <Feather name="camera" size={22} color={colors.mutedForeground} />
-                <Text style={[styles.imagePlaceholderText, { color: colors.mutedForeground }]}>
-                  Tap to update slip photo
+              <View style={styles.slipPickerPlaceholder}>
+                <Feather name="camera" size={22} color={colors.mutedForeground} strokeWidth={1.5} />
+                <Text style={[styles.slipPickerHint, { color: colors.mutedForeground }]}>
+                  Tap to attach or update the slip photo
                 </Text>
               </View>
             )}
           </Pressable>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>ADD NOTE / UPDATE</Text>
+        <View style={styles.formSection}>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
+            ANYTHING TO NOTE? (PAYMENT UPDATE, EXTRA WORK, ETC.)
+          </Text>
           <TextInput
             style={[
-              styles.input,
-              styles.textArea,
-              { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border },
+              styles.textField,
+              styles.multiLineField,
+              { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }
             ]}
-            value={noteInput}
-            onChangeText={setNoteInput}
-            placeholder="e.g. Added ₹500 for extra work..."
+            value={updateNote}
+            onChangeText={setUpdateNote}
+            placeholder="e.g. Received ₹5,000 advance on 15th April..."
             placeholderTextColor={colors.mutedForeground}
             multiline
             numberOfLines={3}
           />
         </View>
 
-        <View style={styles.actionRow}>
-          <Pressable
-            onPress={handleWhatsApp}
-            style={[styles.waBtn, { backgroundColor: "#25D36622", borderColor: "#25D366" }]}
-          >
-            <Feather name="share-2" size={18} color="#25D366" />
-            <Text style={[styles.waBtnText, { color: "#25D366" }]}>Share via WhatsApp</Text>
-          </Pressable>
-        </View>
-
         <Pressable
-          onPress={handleSave}
-          disabled={saving}
+          onPress={shareOnWhatsApp}
           style={({ pressed }) => [
-            styles.saveBtn,
-            { backgroundColor: colors.gold, opacity: pressed || saving ? 0.75 : 1 },
+            styles.whatsAppBtn,
+            { borderColor: "#25D366", backgroundColor: pressed ? "#25D36622" : "#25D36611", transform: [{ scale: pressed ? 0.98 : 1 }] }
           ]}
         >
-          {saving ? (
-            <ActivityIndicator color={colors.primaryForeground} />
-          ) : (
-            <Text style={[styles.saveBtnText, { color: colors.primaryForeground }]}>Save Changes</Text>
-          )}
+          <Feather name="share-2" size={16} color="#25D366" strokeWidth={1.5} />
+          <Text style={[styles.whatsAppBtnText, { color: "#25D366" }]}>Share status on WhatsApp</Text>
         </Pressable>
 
-        {task.history.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>HISTORY</Text>
-            <View style={[styles.historyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {[...task.history].reverse().map((entry, idx) => (
-                <View key={idx} style={[styles.historyEntry, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}>
-                  <Text style={[styles.historyDate, { color: colors.mutedForeground }]}>
-                    {formatDate(entry.date)}
-                  </Text>
-                  <Text style={[styles.historyNote, { color: colors.foreground }]}>{entry.note}</Text>
+        <Pressable
+          onPress={saveChanges}
+          disabled={isSaving}
+          style={({ pressed }) => [
+            styles.saveBtn,
+            { backgroundColor: colors.gold, opacity: pressed || isSaving ? 0.75 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }
+          ]}
+        >
+          <Text style={[styles.saveBtnLabel, { color: colors.primaryForeground }]}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Text>
+        </Pressable>
+
+        {taskEntry.history.length > 0 && (
+          <View style={styles.historySection}>
+            <Text style={[styles.historySectionTitle, { color: colors.pearl }]}>
+              Transaction Log
+            </Text>
+            <View style={[styles.historyLog, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+              {[...taskEntry.history].reverse().map((logEntry, entryIndex) => (
+                <View
+                  key={entryIndex}
+                  style={[
+                    styles.logEntry,
+                    entryIndex > 0 && { borderTopWidth: 0.5, borderTopColor: colors.border }
+                  ]}
+                >
+                  <View style={styles.logEntryLeft}>
+                    <View style={[styles.logDot, { backgroundColor: colors.goldDim }]} />
+                    <View style={styles.logEntryContent}>
+                      <Text style={[styles.logDate, { color: colors.mutedForeground }]}>
+                        {humanDate(logEntry.date)}
+                      </Text>
+                      <Text style={[styles.logNote, { color: colors.foreground }]}>
+                        {logEntry.note}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               ))}
             </View>
@@ -311,17 +338,19 @@ export default function TaskDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
   },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 24,
   },
-  notFound: {
-    fontSize: 16,
+  missingText: {
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
+    textAlign: "center",
   },
   topBar: {
     flexDirection: "row",
@@ -329,172 +358,199 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
   },
-  backBtn: {
+  iconBtn: {
     width: 36,
     height: 36,
     alignItems: "center",
     justifyContent: "center",
   },
-  topTitle: {
+  topBarTitle: {
     flex: 1,
     textAlign: "center",
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 2,
+    fontSize: 14,
+    fontFamily: "PlayfairDisplay_700Bold",
+    letterSpacing: 0.5,
     marginHorizontal: 8,
   },
-  scroll: {
+  scrollArea: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    gap: 20,
+    paddingLeft: 18,
+    gap: 22,
   },
-  card: {
-    borderRadius: 4,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
+  summaryCard: {
+    borderWidth: 0.5,
+    borderRadius: 6,
+    padding: 18,
+    paddingLeft: 20,
+    gap: 14,
   },
-  amountRow: {
+  summaryAmounts: {
     flexDirection: "row",
-    justifyContent: "space-around",
-  },
-  amountItem: {
     alignItems: "center",
+  },
+  summaryAmountBlock: {
+    flex: 1,
     gap: 4,
   },
-  amountLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 1.5,
+  summaryDivider: {
+    width: 0.5,
+    height: 40,
+    marginHorizontal: 18,
   },
-  amountValue: {
+  summaryAmountLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  summaryAmountFigure: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
   },
-  progressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  progressSection: {
+    gap: 6,
   },
-  progressBg: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
+  progressRail: {
+    height: 2,
+    borderRadius: 1,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 2,
+    borderRadius: 1,
   },
-  progressText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    width: 36,
+  progressRatioLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
     textAlign: "right",
   },
-  section: {
+  formSection: {
     gap: 8,
   },
-  sectionLabel: {
-    fontSize: 10,
+  fieldLabel: {
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 4,
+  textField: {
+    borderWidth: 0.5,
+    borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     fontFamily: "Inter_400Regular",
   },
-  textArea: {
-    height: 90,
+  multiLineField: {
+    height: 85,
     textAlignVertical: "top",
     paddingTop: 12,
   },
-  statusRow: {
+  statusOptions: {
     flexDirection: "row",
     gap: 8,
   },
-  statusChip: {
+  statusOption: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingVertical: 10,
+    borderWidth: 0.5,
+    borderRadius: 6,
+    paddingVertical: 11,
     alignItems: "center",
   },
-  statusText: {
+  statusOptionText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
   },
-  imagePicker: {
-    borderWidth: 1,
-    borderRadius: 4,
+  slipPickerArea: {
+    borderWidth: 0.5,
+    borderRadius: 6,
     height: 130,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  imagePlaceholder: {
+  slipPickerPlaceholder: {
     alignItems: "center",
     gap: 8,
   },
-  imagePlaceholderText: {
-    fontSize: 13,
+  slipPickerHint: {
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
-  previewImage: {
+  slipPreview: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
   },
-  actionRow: {
-    gap: 10,
-  },
-  waBtn: {
+  whatsAppBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    borderWidth: 1,
-    borderRadius: 4,
+    borderWidth: 0.5,
+    borderRadius: 6,
     paddingVertical: 14,
   },
-  waBtnText: {
+  whatsAppBtnText: {
     fontSize: 14,
     fontFamily: "Inter_500Medium",
   },
   saveBtn: {
-    borderRadius: 4,
+    borderRadius: 6,
     paddingVertical: 16,
     alignItems: "center",
   },
-  saveBtnText: {
-    fontSize: 15,
+  saveBtnLabel: {
+    fontSize: 14,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
-  historyContainer: {
-    borderRadius: 4,
-    borderWidth: 1,
+  historySection: {
+    gap: 10,
+  },
+  historySectionTitle: {
+    fontSize: 16,
+    fontFamily: "PlayfairDisplay_600SemiBold",
+    letterSpacing: 0.3,
+  },
+  historyLog: {
+    borderWidth: 0.5,
+    borderRadius: 6,
     overflow: "hidden",
   },
-  historyEntry: {
-    padding: 12,
-    gap: 4,
+  logEntry: {
+    padding: 14,
+    paddingLeft: 16,
   },
-  historyDate: {
+  logEntryLeft: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  logDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 5,
+  },
+  logEntryContent: {
+    flex: 1,
+    gap: 3,
+  },
+  logDate: {
     fontSize: 10,
     fontFamily: "Inter_400Regular",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
-  historyNote: {
+  logNote: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
+    lineHeight: 19,
   },
 });

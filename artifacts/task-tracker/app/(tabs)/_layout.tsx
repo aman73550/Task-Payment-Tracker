@@ -17,6 +17,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "list.bullet", selected: "list.bullet" }} />
         <Label>Tasks</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="finance">
+        <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
+        <Label>Finance</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -32,19 +36,17 @@ function ClassicTabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.gold,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: true,
-        headerStyle: {
-          backgroundColor: colors.background,
-        },
+        headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.foreground,
         headerShadowVisible: false,
         tabBarStyle: {
           position: "absolute",
           backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.goldBorder,
           elevation: 0,
           height: isWeb ? 84 : 50 + insets.bottom,
         },
@@ -52,16 +54,11 @@ function ClassicTabLayout() {
           isIOS ? (
             <BlurView
               intensity={100}
-              tint={isDark ? "dark" : "dark"}
+              tint="dark"
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.background },
-              ]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
       }}
     >
@@ -71,17 +68,38 @@ function ClassicTabLayout() {
           title: "Payment Tracker",
           headerTitleStyle: {
             color: colors.gold,
-            fontSize: 12,
-            fontFamily: "Inter_700Bold",
-            letterSpacing: 3,
+            fontSize: 13,
+            fontFamily: "PlayfairDisplay_700Bold",
+            letterSpacing: 2,
           },
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="list.bullet" tintColor={color} size={22} />
             ) : (
-              <Feather name="list" size={22} color={color} />
+              <Feather name="list" size={21} color={color} strokeWidth={1.5} />
             ),
           tabBarLabel: "Tasks",
+          tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 11 },
+        }}
+      />
+      <Tabs.Screen
+        name="finance"
+        options={{
+          title: "Finance",
+          headerTitleStyle: {
+            color: colors.gold,
+            fontSize: 13,
+            fontFamily: "PlayfairDisplay_700Bold",
+            letterSpacing: 2,
+          },
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="chart.bar" tintColor={color} size={22} />
+            ) : (
+              <Feather name="trending-up" size={21} color={color} strokeWidth={1.5} />
+            ),
+          tabBarLabel: "Finance",
+          tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 11 },
         }}
       />
     </Tabs>

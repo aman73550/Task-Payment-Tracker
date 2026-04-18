@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
@@ -21,7 +22,7 @@ import { useColors } from "@/hooks/useColors";
 interface AddTaskModalProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (data: {
+  onAdd: (slipPayload: {
     task_name: string;
     total_amount: number;
     paid_amount: number;
@@ -36,68 +37,66 @@ const STATUS_OPTIONS: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalProps) {
   const colors = useColors();
   const [taskName, setTaskName] = useState("");
-  const [totalAmount, setTotalAmount] = useState("");
-  const [paidAmount, setPaidAmount] = useState("0");
-  const [status, setStatus] = useState<TaskStatus>("Pending");
-  const [imageUri, setImageUri] = useState<string | undefined>();
-  const [notes, setNotes] = useState("");
-  const [pickingImage, setPickingImage] = useState(false);
+  const [billedAmount, setBilledAmount] = useState("");
+  const [receivedAmount, setReceivedAmount] = useState("0");
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus>("Pending");
+  const [slipImageUri, setSlipImageUri] = useState<string | undefined>();
+  const [taskNote, setTaskNote] = useState("");
+  const [pickingPhoto, setPickingPhoto] = useState(false);
 
-  const reset = () => {
+  const resetForm = () => {
     setTaskName("");
-    setTotalAmount("");
-    setPaidAmount("0");
-    setStatus("Pending");
-    setImageUri(undefined);
-    setNotes("");
+    setBilledAmount("");
+    setReceivedAmount("0");
+    setSelectedStatus("Pending");
+    setSlipImageUri(undefined);
+    setTaskNote("");
   };
 
-  const handleClose = () => {
-    reset();
+  const handleCancel = () => {
+    resetForm();
     onClose();
   };
 
-  const handlePickImage = async () => {
-    setPickingImage(true);
+  const handlePickSlipPhoto = async () => {
+    setPickingPhoto(true);
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        setPickingImage(false);
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) return;
+
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
         quality: 0.7,
-        base64: false,
       });
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
+      if (!pickerResult.canceled && pickerResult.assets[0]) {
+        setSlipImageUri(pickerResult.assets[0].uri);
       }
     } finally {
-      setPickingImage(false);
+      setPickingPhoto(false);
     }
   };
 
-  const handleAdd = () => {
-    const name = taskName.trim();
-    const total = parseFloat(totalAmount);
-    const paid = parseFloat(paidAmount) || 0;
-    if (!name || isNaN(total) || total <= 0) return;
+  const handleSubmit = () => {
+    const cleanName = taskName.trim();
+    const totalBilled = parseFloat(billedAmount);
+    const totalReceived = parseFloat(receivedAmount) || 0;
+    if (!cleanName || isNaN(totalBilled) || totalBilled <= 0) return;
 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onAdd({
-      task_name: name,
-      total_amount: total,
-      paid_amount: Math.min(paid, total),
-      status,
-      image_uri: imageUri,
-      notes: notes.trim() || undefined,
+      task_name: cleanName,
+      total_amount: totalBilled,
+      paid_amount: Math.min(totalReceived, totalBilled),
+      status: selectedStatus,
+      image_uri: slipImageUri,
+      notes: taskNote.trim() || undefined,
     });
-    reset();
+    resetForm();
     onClose();
   };
 
-  const isValid = taskName.trim().length > 0 && parseFloat(totalAmount) > 0;
+  const canSubmit = taskName.trim().length > 0 && parseFloat(billedAmount) > 0;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -105,130 +104,141 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
         style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Pressable onPress={handleClose} style={styles.headerBtn}>
-            <Text style={[styles.headerBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.gold }]}>NEW TASK</Text>
+        <View style={[styles.modalHeader, { borderBottomColor: colors.goldBorder }]}>
           <Pressable
-            onPress={handleAdd}
-            disabled={!isValid}
-            style={styles.headerBtn}
+            onPress={handleCancel}
+            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           >
-            <Text
-              style={[
-                styles.headerBtnText,
-                { color: isValid ? colors.gold : colors.border },
-              ]}
-            >
+            <Text style={[styles.cancelLabel, { color: colors.mutedForeground }]}>Cancel</Text>
+          </Pressable>
+          <Text style={[styles.modalTitle, { color: colors.gold }]}>New Task</Text>
+          <Pressable
+            onPress={handleSubmit}
+            disabled={!canSubmit}
+            style={({ pressed }) => [
+              styles.addButton,
+              {
+                backgroundColor: canSubmit ? colors.gold : colors.secondary,
+                opacity: pressed ? 0.8 : 1,
+                transform: [{ scale: pressed ? 0.97 : 1 }],
+              }
+            ]}
+          >
+            <Text style={[styles.addButtonLabel, { color: canSubmit ? colors.primaryForeground : colors.border }]}>
               Add
             </Text>
           </Pressable>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>TASK NAME</Text>
+        <ScrollView
+          style={styles.formScroll}
+          contentContainerStyle={styles.formContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>WHAT'S THE TASK?</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
-              placeholder="e.g. Website Design Work"
+              style={[styles.textField, { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }]}
+              placeholder="e.g. Website redesign for client"
               placeholderTextColor={colors.mutedForeground}
               value={taskName}
               onChangeText={setTaskName}
             />
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>TOTAL (₹)</Text>
+          <View style={styles.amountRow}>
+            <View style={[styles.formField, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>TOTAL BILLED (₹)</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
+                style={[styles.textField, { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }]}
                 placeholder="0"
                 placeholderTextColor={colors.mutedForeground}
-                value={totalAmount}
-                onChangeText={setTotalAmount}
+                value={billedAmount}
+                onChangeText={setBilledAmount}
                 keyboardType="numeric"
               />
             </View>
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>PAID (₹)</Text>
+            <View style={[styles.formField, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>RECEIVED SO FAR (₹)</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
+                style={[styles.textField, { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }]}
                 placeholder="0"
                 placeholderTextColor={colors.mutedForeground}
-                value={paidAmount}
-                onChangeText={setPaidAmount}
+                value={receivedAmount}
+                onChangeText={setReceivedAmount}
                 keyboardType="numeric"
               />
             </View>
           </View>
 
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>STATUS</Text>
-            <View style={styles.statusRow}>
-              {STATUS_OPTIONS.map((s) => (
+          <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>STATUS</Text>
+            <View style={styles.statusOptions}>
+              {STATUS_OPTIONS.map((statusOption) => (
                 <Pressable
-                  key={s}
-                  style={[
-                    styles.statusChip,
+                  key={statusOption}
+                  style={({ pressed }) => [
+                    styles.statusOption,
                     {
-                      backgroundColor: status === s ? colors.gold : colors.card,
-                      borderColor: status === s ? colors.gold : colors.border,
+                      backgroundColor: selectedStatus === statusOption ? colors.gold : colors.card,
+                      borderColor: selectedStatus === statusOption ? colors.gold : colors.goldBorder,
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
                     },
                   ]}
-                  onPress={() => setStatus(s)}
+                  onPress={() => {
+                    setSelectedStatus(statusOption);
+                    Haptics.selectionAsync();
+                  }}
                 >
-                  <Text
-                    style={[
-                      styles.statusChipText,
-                      { color: status === s ? colors.primaryForeground : colors.mutedForeground },
-                    ]}
-                  >
-                    {s}
+                  <Text style={[
+                    styles.statusOptionText,
+                    { color: selectedStatus === statusOption ? colors.primaryForeground : colors.mutedForeground }
+                  ]}>
+                    {statusOption}
                   </Text>
                 </Pressable>
               ))}
             </View>
           </View>
 
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>SLIP / PHOTO</Text>
+          <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>PAYMENT SLIP (OPTIONAL)</Text>
             <Pressable
-              style={[styles.imagePicker, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={handlePickImage}
+              style={[styles.slipPickerArea, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+              onPress={handlePickSlipPhoto}
             >
-              {pickingImage ? (
+              {pickingPhoto ? (
                 <ActivityIndicator color={colors.gold} />
-              ) : imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              ) : slipImageUri ? (
+                <Image source={{ uri: slipImageUri }} style={styles.slipPreview} />
               ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Feather name="camera" size={24} color={colors.mutedForeground} />
-                  <Text style={[styles.imagePlaceholderText, { color: colors.mutedForeground }]}>
-                    Tap to pick a slip photo
+                <View style={styles.slipPlaceholder}>
+                  <Feather name="camera" size={22} color={colors.mutedForeground} strokeWidth={1.5} />
+                  <Text style={[styles.slipHint, { color: colors.mutedForeground }]}>
+                    Attach a slip or receipt photo
                   </Text>
                 </View>
               )}
             </Pressable>
-            {imageUri && (
-              <Pressable onPress={() => setImageUri(undefined)} style={styles.removeImage}>
-                <Text style={[styles.removeImageText, { color: colors.destructive }]}>Remove photo</Text>
+            {slipImageUri && (
+              <Pressable onPress={() => setSlipImageUri(undefined)}>
+                <Text style={[styles.removePhotoLabel, { color: colors.destructive }]}>Remove photo</Text>
               </Pressable>
             )}
           </View>
 
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>NOTES</Text>
+          <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>NOTES (OPTIONAL)</Text>
             <TextInput
               style={[
-                styles.input,
-                styles.textArea,
-                { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border },
+                styles.textField,
+                styles.multiLineField,
+                { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }
               ]}
-              placeholder="Add notes here..."
+              placeholder="Any extra details about this task..."
               placeholderTextColor={colors.mutedForeground}
-              value={notes}
-              onChangeText={setNotes}
+              value={taskNote}
+              onChangeText={setTaskNote}
               multiline
               numberOfLines={4}
             />
@@ -243,101 +253,107 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
   },
-  headerBtn: {
-    minWidth: 60,
+  cancelLabel: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
   },
-  headerBtnText: {
-    fontSize: 16,
-    fontFamily: "Inter_500Medium",
+  modalTitle: {
+    fontSize: 15,
+    fontFamily: "PlayfairDisplay_700Bold",
+    letterSpacing: 0.5,
   },
-  headerTitle: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 3,
+  addButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 6,
   },
-  scroll: {
+  addButtonLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+  },
+  formScroll: {
     flex: 1,
   },
-  scrollContent: {
+  formContent: {
     padding: 20,
-    gap: 20,
+    paddingLeft: 22,
+    gap: 22,
     paddingBottom: 40,
   },
-  field: {
+  formField: {
     gap: 8,
   },
-  label: {
-    fontSize: 10,
+  fieldLabel: {
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 4,
+  textField: {
+    borderWidth: 0.5,
+    borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     fontFamily: "Inter_400Regular",
   },
-  textArea: {
+  multiLineField: {
     height: 100,
     textAlignVertical: "top",
     paddingTop: 12,
   },
-  row: {
+  amountRow: {
     flexDirection: "row",
     gap: 12,
   },
-  statusRow: {
+  statusOptions: {
     flexDirection: "row",
     gap: 8,
   },
-  statusChip: {
+  statusOption: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingVertical: 10,
+    borderWidth: 0.5,
+    borderRadius: 6,
+    paddingVertical: 11,
     alignItems: "center",
   },
-  statusChipText: {
+  statusOptionText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
   },
-  imagePicker: {
-    borderWidth: 1,
-    borderRadius: 4,
-    borderStyle: "dashed",
+  slipPickerArea: {
+    borderWidth: 0.5,
+    borderRadius: 6,
     height: 140,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  imagePlaceholder: {
+  slipPlaceholder: {
     alignItems: "center",
     gap: 8,
   },
-  imagePlaceholderText: {
-    fontSize: 13,
+  slipHint: {
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
-  previewImage: {
+  slipPreview: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
   },
-  removeImage: {
-    alignSelf: "flex-end",
-  },
-  removeImageText: {
+  removePhotoLabel: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
+    alignSelf: "flex-end",
   },
 });

@@ -1,42 +1,32 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
-import {
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Task, TaskStatus } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
-function getStatusColor(status: TaskStatus, gold: string, muted: string, success: string) {
-  if (status === "Completed") return success;
-  if (status === "In Progress") return gold;
-  return muted;
+function statusAccent(taskStatus: TaskStatus, colors: ReturnType<typeof useColors>) {
+  if (taskStatus === "Completed") return colors.success;
+  if (taskStatus === "In Progress") return colors.gold;
+  return colors.mutedForeground;
 }
 
-function formatCurrency(amount: number) {
-  return `₹${amount.toLocaleString("en-IN")}`;
+function rupeeFormat(value: number) {
+  return `₹${value.toLocaleString("en-IN")}`;
 }
 
 export default function TaskCard({ task }: { task: Task }) {
   const colors = useColors();
-  const remaining = task.total_amount - task.paid_amount;
-  const progress = task.total_amount > 0 ? (task.paid_amount / task.total_amount) * 100 : 0;
-  const statusColor = getStatusColor(
-    task.status,
-    colors.gold,
-    colors.mutedForeground,
-    colors.success
-  );
+  const outstandingDue = task.total_amount - task.paid_amount;
+  const collectionRatio = task.total_amount > 0
+    ? (task.paid_amount / task.total_amount) * 100
+    : 0;
+  const accentColor = statusAccent(task.status, colors);
 
-  const handleWhatsApp = () => {
-    const message = `Task: ${task.task_name} | Status: ${task.status} | Total: ${formatCurrency(task.total_amount)} | Paid: ${formatCurrency(task.paid_amount)} | Pending: ${formatCurrency(remaining)}`;
-    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+  const onWhatsAppShare = () => {
+    const shareText = `Task: ${task.task_name} | Status: ${task.status} | Total: ${rupeeFormat(task.total_amount)} | Paid: ${rupeeFormat(task.paid_amount)} | Pending: ${rupeeFormat(outstandingDue)}`;
+    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`);
   };
 
   return (
@@ -45,69 +35,68 @@ export default function TaskCard({ task }: { task: Task }) {
         styles.card,
         {
           backgroundColor: colors.card,
-          borderLeftColor: statusColor,
-          opacity: pressed ? 0.85 : 1,
+          borderColor: colors.goldBorder,
+          borderLeftColor: accentColor,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
       onPress={() => router.push(`/task/${task.id}`)}
     >
-      <View style={styles.row}>
+      <View style={styles.innerRow}>
         {task.image_uri ? (
-          <Image source={{ uri: task.image_uri }} style={styles.thumbnail} />
+          <Image source={{ uri: task.image_uri }} style={[styles.slipThumb, { borderColor: colors.border }]} />
         ) : (
-          <View style={[styles.thumbnail, styles.noImage, { backgroundColor: colors.secondary }]}>
-            <Feather name="file-text" size={20} color={colors.mutedForeground} />
+          <View style={[styles.slipThumb, styles.slipPlaceholder, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+            <Feather name="file-text" size={18} color={colors.mutedForeground} strokeWidth={1.5} />
           </View>
         )}
 
-        <View style={styles.info}>
-          <Text style={[styles.taskName, { color: colors.foreground }]} numberOfLines={1}>
+        <View style={styles.taskMeta}>
+          <Text style={[styles.taskTitle, { color: colors.pearl }]} numberOfLines={1}>
             {task.task_name}
           </Text>
-          <View style={styles.amountRow}>
-            <Text style={[styles.amountLabel, { color: colors.mutedForeground }]}>Total </Text>
-            <Text style={[styles.amount, { color: colors.foreground }]}>
-              {formatCurrency(task.total_amount)}
+
+          <View style={styles.amountsRow}>
+            <Text style={[styles.amountChip, { color: colors.mutedForeground }]}>
+              Billed{" "}
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
+                {rupeeFormat(task.total_amount)}
+              </Text>
             </Text>
-          </View>
-          <View style={styles.amountRow}>
-            <Text style={[styles.amountLabel, { color: colors.mutedForeground }]}>Pending </Text>
-            <Text style={[styles.pendingAmount, { color: remaining > 0 ? colors.gold : colors.success }]}>
-              {formatCurrency(remaining)}
+            <Text style={[styles.amountChip, { color: outstandingDue > 0 ? colors.champagne : colors.success }]}>
+              Due {rupeeFormat(outstandingDue)}
             </Text>
           </View>
         </View>
 
-        <View style={styles.rightSide}>
-          <View style={[styles.statusBadge, { borderColor: statusColor }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>{task.status}</Text>
+        <View style={styles.rightColumn}>
+          <View style={[styles.statusPill, { borderColor: accentColor }]}>
+            <Text style={[styles.statusLabel, { color: accentColor }]}>{task.status}</Text>
           </View>
           <Pressable
-            onPress={handleWhatsApp}
-            style={({ pressed }) => [
-              styles.waButton,
-              { backgroundColor: pressed ? "#128C7E33" : "transparent" },
-            ]}
+            onPress={onWhatsAppShare}
+            hitSlop={8}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <Feather name="share-2" size={15} color="#25D366" />
+            <Feather name="share-2" size={14} color="#25D366" strokeWidth={1.5} />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBg, { backgroundColor: colors.secondary }]}>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressRail, { backgroundColor: colors.secondary }]}>
           <View
             style={[
               styles.progressFill,
               {
-                width: `${Math.min(progress, 100)}%` as any,
-                backgroundColor: progress >= 100 ? colors.success : colors.gold,
+                width: `${Math.min(collectionRatio, 100)}%` as any,
+                backgroundColor: collectionRatio >= 100 ? colors.success : colors.gold,
               },
             ]}
           />
         </View>
-        <Text style={[styles.progressText, { color: colors.mutedForeground }]}>
-          {Math.round(progress)}%
+        <Text style={[styles.ratioLabel, { color: colors.mutedForeground }]}>
+          {Math.round(collectionRatio)}%
         </Text>
       </View>
     </Pressable>
@@ -116,88 +105,83 @@ export default function TaskCard({ task }: { task: Task }) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 4,
+    borderRadius: 6,
+    borderWidth: 0.5,
     borderLeftWidth: 2,
-    padding: 14,
+    paddingTop: 14,
+    paddingRight: 14,
+    paddingBottom: 12,
+    paddingLeft: 16,
     marginBottom: 10,
     gap: 10,
   },
-  row: {
+  innerRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 14,
     alignItems: "flex-start",
   },
-  thumbnail: {
-    width: 52,
-    height: 52,
+  slipThumb: {
+    width: 48,
+    height: 48,
     borderRadius: 4,
+    borderWidth: 0.5,
   },
-  noImage: {
+  slipPlaceholder: {
     alignItems: "center",
     justifyContent: "center",
   },
-  info: {
+  taskMeta: {
     flex: 1,
-    gap: 3,
+    gap: 5,
   },
-  taskName: {
+  taskTitle: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    marginBottom: 2,
+    letterSpacing: 0.1,
   },
-  amountRow: {
+  amountsRow: {
     flexDirection: "row",
-    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
   },
-  amountLabel: {
+  amountChip: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
   },
-  amount: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-  },
-  pendingAmount: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  rightSide: {
+  rightColumn: {
     alignItems: "flex-end",
-    gap: 8,
+    gap: 10,
   },
-  statusBadge: {
-    borderWidth: 1,
+  statusPill: {
+    borderWidth: 0.5,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  statusText: {
+  statusLabel: {
     fontSize: 10,
     fontFamily: "Inter_500Medium",
+    letterSpacing: 0.5,
   },
-  waButton: {
-    borderRadius: 4,
-    padding: 4,
-  },
-  progressContainer: {
+  progressTrack: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  progressBg: {
+  progressRail: {
     flex: 1,
-    height: 3,
-    borderRadius: 2,
+    height: 2,
+    borderRadius: 1,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 2,
+    borderRadius: 1,
   },
-  progressText: {
-    fontSize: 11,
+  ratioLabel: {
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
-    width: 30,
+    width: 28,
     textAlign: "right",
   },
 });
