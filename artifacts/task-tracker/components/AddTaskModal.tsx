@@ -89,7 +89,9 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
       total_amount: totalBilled,
       paid_amount: Math.min(totalReceived, totalBilled),
       status: selectedStatus,
-      image_uri: slipImageUri,
+      work_done: selectedStatus === "Completed",
+      payment_received: selectedStatus === "Completed" && totalReceived >= totalBilled,
+      image_uris: slipImageUri ? [slipImageUri] : [],
       notes: taskNote.trim() || undefined,
     });
     resetForm();

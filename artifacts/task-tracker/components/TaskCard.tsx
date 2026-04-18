@@ -1,16 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React from "react";
 import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Task, TaskStatus } from "@/context/TasksContext";
+import { Task, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
-
-function statusAccent(taskStatus: TaskStatus, colors: ReturnType<typeof useColors>) {
-  if (taskStatus === "Completed") return colors.success;
-  if (taskStatus === "In Progress") return colors.gold;
-  return colors.mutedForeground;
-}
 
 function rupeeFormat(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
@@ -18,16 +13,49 @@ function rupeeFormat(value: number) {
 
 export default function TaskCard({ task }: { task: Task }) {
   const colors = useColors();
+  const { updateTask } = useTasks();
+
   const outstandingDue = task.total_amount - task.paid_amount;
-  const collectionRatio = task.total_amount > 0
-    ? (task.paid_amount / task.total_amount) * 100
-    : 0;
-  const accentColor = statusAccent(task.status, colors);
+  const collectionRatio =
+    task.total_amount > 0 ? (task.paid_amount / task.total_amount) * 100 : 0;
+
+  const toggleWorkDone = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nowDone = !task.work_done;
+    await updateTask(
+      task.id,
+      { work_done: nowDone, status: nowDone ? "Completed" : "In Progress" },
+      {
+        date: new Date().toISOString(),
+        note: nowDone ? "Task marked as done" : "Task reopened",
+      }
+    );
+  };
+
+  const togglePaymentReceived = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nowPaid = !task.payment_received;
+    await updateTask(
+      task.id,
+      {
+        payment_received: nowPaid,
+        paid_amount: nowPaid ? task.total_amount : task.paid_amount,
+      },
+      {
+        date: new Date().toISOString(),
+        note: nowPaid
+          ? `Full payment received — ${rupeeFormat(task.total_amount)}`
+          : "Payment marked as pending",
+      }
+    );
+  };
 
   const onWhatsAppShare = () => {
-    const shareText = `Task: ${task.task_name} | Status: ${task.status} | Total: ${rupeeFormat(task.total_amount)} | Paid: ${rupeeFormat(task.paid_amount)} | Pending: ${rupeeFormat(outstandingDue)}`;
+    const shareText = `Task: ${task.task_name} | Work: ${task.work_done ? "Done" : "Active"} | Payment: ${task.payment_received ? "Received" : "Pending"} | Total: ${rupeeFormat(task.total_amount)} | Due: ${rupeeFormat(outstandingDue)}`;
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`);
   };
+
+  const thumbnailUri = task.image_uris?.[0];
 
   return (
     <Pressable
@@ -36,18 +64,21 @@ export default function TaskCard({ task }: { task: Task }) {
         {
           backgroundColor: colors.card,
           borderColor: colors.goldBorder,
-          borderLeftColor: accentColor,
+          borderLeftColor: task.work_done ? colors.success : task.payment_received ? colors.champagne : colors.mutedForeground,
           transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
       onPress={() => router.push(`/task/${task.id}`)}
     >
-      <View style={styles.innerRow}>
-        {task.image_uri ? (
-          <Image source={{ uri: task.image_uri }} style={[styles.slipThumb, { borderColor: colors.border }]} />
+      <View style={styles.topRow}>
+        {thumbnailUri ? (
+          <Image
+            source={{ uri: thumbnailUri }}
+            style={[styles.slipThumb, { borderColor: colors.border }]}
+          />
         ) : (
           <View style={[styles.slipThumb, styles.slipPlaceholder, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-            <Feather name="file-text" size={18} color={colors.mutedForeground} strokeWidth={1.5} />
+            <Feather name="file-text" size={17} color={colors.mutedForeground} strokeWidth={1.5} />
           </View>
         )}
 
@@ -55,49 +86,96 @@ export default function TaskCard({ task }: { task: Task }) {
           <Text style={[styles.taskTitle, { color: colors.pearl }]} numberOfLines={1}>
             {task.task_name}
           </Text>
-
           <View style={styles.amountsRow}>
-            <Text style={[styles.amountChip, { color: colors.mutedForeground }]}>
+            <Text style={[styles.amountNote, { color: colors.mutedForeground }]}>
               Billed{" "}
               <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
                 {rupeeFormat(task.total_amount)}
               </Text>
             </Text>
-            <Text style={[styles.amountChip, { color: outstandingDue > 0 ? colors.champagne : colors.success }]}>
-              Due {rupeeFormat(outstandingDue)}
-            </Text>
+            {outstandingDue > 0 && !task.payment_received && (
+              <Text style={[styles.amountNote, { color: colors.champagne }]}>
+                Due {rupeeFormat(outstandingDue)}
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.rightColumn}>
-          <View style={[styles.statusPill, { borderColor: accentColor }]}>
-            <Text style={[styles.statusLabel, { color: accentColor }]}>{task.status}</Text>
-          </View>
-          <Pressable
-            onPress={onWhatsAppShare}
-            hitSlop={8}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-          >
-            <Feather name="share-2" size={14} color="#25D366" strokeWidth={1.5} />
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={onWhatsAppShare}
+          hitSlop={10}
+          style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+        >
+          <Feather name="share-2" size={14} color="#25D366" strokeWidth={1.5} />
+        </Pressable>
       </View>
 
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressRail, { backgroundColor: colors.secondary }]}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${Math.min(collectionRatio, 100)}%` as any,
-                backgroundColor: collectionRatio >= 100 ? colors.success : colors.gold,
-              },
-            ]}
+      <View style={[styles.progressRail, { backgroundColor: colors.secondary }]}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${Math.min(collectionRatio, 100)}%` as any,
+              backgroundColor: task.payment_received ? colors.success : colors.gold,
+            },
+          ]}
+        />
+      </View>
+
+      <View style={styles.dualButtonRow}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.dualBtn,
+            {
+              backgroundColor: task.work_done ? colors.gold : "transparent",
+              borderColor: task.work_done ? colors.gold : colors.goldBorder,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            },
+          ]}
+          onPress={toggleWorkDone}
+        >
+          <Feather
+            name={task.work_done ? "check-circle" : "circle"}
+            size={13}
+            color={task.work_done ? colors.primaryForeground : colors.pearl}
+            strokeWidth={1.5}
           />
-        </View>
-        <Text style={[styles.ratioLabel, { color: colors.mutedForeground }]}>
-          {Math.round(collectionRatio)}%
-        </Text>
+          <Text
+            style={[
+              styles.dualBtnLabel,
+              { color: task.work_done ? colors.primaryForeground : colors.pearl },
+            ]}
+          >
+            {task.work_done ? "Task Done" : "In Progress"}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.dualBtn,
+            {
+              backgroundColor: task.payment_received ? colors.success + "22" : "transparent",
+              borderColor: task.payment_received ? colors.success : colors.goldBorder,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            },
+          ]}
+          onPress={togglePaymentReceived}
+        >
+          <Feather
+            name={task.payment_received ? "check-circle" : "clock"}
+            size={13}
+            color={task.payment_received ? colors.success : colors.champagne}
+            strokeWidth={1.5}
+          />
+          <Text
+            style={[
+              styles.dualBtnLabel,
+              { color: task.payment_received ? colors.success : colors.champagne },
+            ]}
+          >
+            {task.payment_received ? "Paid" : "Awaiting Payment"}
+          </Text>
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -115,14 +193,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 10,
   },
-  innerRow: {
+  topRow: {
     flexDirection: "row",
-    gap: 14,
+    gap: 12,
     alignItems: "flex-start",
   },
   slipThumb: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 4,
     borderWidth: 0.5,
   },
@@ -132,45 +210,23 @@ const styles = StyleSheet.create({
   },
   taskMeta: {
     flex: 1,
-    gap: 5,
+    gap: 4,
   },
   taskTitle: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.1,
   },
   amountsRow: {
     flexDirection: "row",
     gap: 12,
     flexWrap: "wrap",
   },
-  amountChip: {
+  amountNote: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
   },
-  rightColumn: {
-    alignItems: "flex-end",
-    gap: 10,
-  },
-  statusPill: {
-    borderWidth: 0.5,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 0.5,
-  },
-  progressTrack: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
   progressRail: {
-    flex: 1,
-    height: 2,
+    height: 1.5,
     borderRadius: 1,
     overflow: "hidden",
   },
@@ -178,10 +234,22 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 1,
   },
-  ratioLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    width: 28,
-    textAlign: "right",
+  dualButtonRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  dualBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 0.5,
+    borderRadius: 5,
+    paddingVertical: 8,
+  },
+  dualBtnLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
   },
 });

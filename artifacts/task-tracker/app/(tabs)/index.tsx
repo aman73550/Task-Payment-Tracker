@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AddTaskModal from "@/components/AddTaskModal";
+import BulkAddModal from "@/components/BulkAddModal";
 import SummaryHeader from "@/components/SummaryHeader";
 import TaskCard from "@/components/TaskCard";
 import { useTasks } from "@/context/TasksContext";
@@ -19,9 +21,14 @@ import { useColors } from "@/hooks/useColors";
 
 export default function HomeScreen() {
   const colors = useColors();
-  const { tasks, loading, addTask } = useTasks();
+  const { tasks, loading, addTask, bulkAddTasks } = useTasks();
   const insets = useSafeAreaInsets();
   const [showAdd, setShowAdd] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [fabExpanded, setFabExpanded] = useState(false);
+
+  const topPad = Platform.OS === "web" ? 67 : 0;
+  const bottomPad = Platform.OS === "web" ? 34 + 50 : insets.bottom + 84;
 
   if (loading) {
     return (
@@ -31,8 +38,10 @@ export default function HomeScreen() {
     );
   }
 
-  const topPad = Platform.OS === "web" ? 67 : 0;
-  const bottomPad = Platform.OS === "web" ? 34 + 50 : insets.bottom + 84;
+  const toggleFab = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFabExpanded((v) => !v);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -42,13 +51,13 @@ export default function HomeScreen() {
         renderItem={({ item }) => <TaskCard task={item} />}
         ListHeaderComponent={<SummaryHeader tasks={tasks} />}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="inbox" size={48} color={colors.border} />
+          <View style={styles.emptyView}>
+            <Feather name="inbox" size={44} color={colors.border} strokeWidth={1.5} />
             <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-              No tasks yet
+              Nothing here yet
             </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.border }]}>
-              Tap + to add your first task
+            <Text style={[styles.emptyHint, { color: colors.border }]}>
+              Tap + to log your first task
             </Text>
           </View>
         }
@@ -59,24 +68,67 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       />
 
+      {fabExpanded && (
+        <View style={[styles.fabMenu, { bottom: bottomPad + 72 }]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.fabMenuItem,
+              { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
+            ]}
+            onPress={() => {
+              setFabExpanded(false);
+              setShowBulk(true);
+            }}
+          >
+            <Feather name="layers" size={15} color={colors.champagne} strokeWidth={1.5} />
+            <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Multiple</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.fabMenuItem,
+              { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
+            ]}
+            onPress={() => {
+              setFabExpanded(false);
+              setShowAdd(true);
+            }}
+          >
+            <Feather name="plus-circle" size={15} color={colors.gold} strokeWidth={1.5} />
+            <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Single</Text>
+          </Pressable>
+        </View>
+      )}
+
       <Pressable
         style={({ pressed }) => [
           styles.fab,
           {
-            backgroundColor: colors.gold,
+            backgroundColor: fabExpanded ? colors.secondary : colors.gold,
+            borderColor: colors.gold,
             bottom: bottomPad + 16,
-            opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.95 : 1 }],
           },
         ]}
-        onPress={() => setShowAdd(true)}
+        onPress={toggleFab}
       >
-        <Feather name="plus" size={28} color={colors.primaryForeground} />
+        <Feather
+          name={fabExpanded ? "x" : "plus"}
+          size={26}
+          color={fabExpanded ? colors.gold : colors.primaryForeground}
+          strokeWidth={1.5}
+        />
       </Pressable>
 
       <AddTaskModal
         visible={showAdd}
         onClose={() => setShowAdd(false)}
         onAdd={addTask}
+      />
+      <BulkAddModal
+        visible={showBulk}
+        onClose={() => setShowBulk(false)}
+        onSaveAll={bulkAddTasks}
       />
     </View>
   );
@@ -93,34 +145,56 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 0,
-    gap: 0,
   },
-  empty: {
+  emptyView: {
     alignItems: "center",
-    paddingTop: 80,
+    paddingTop: 70,
     gap: 12,
   },
   emptyTitle: {
     fontSize: 18,
     fontFamily: "Inter_600SemiBold",
   },
-  emptySubtitle: {
-    fontSize: 14,
+  emptyHint: {
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
+  },
+  fabMenu: {
+    position: "absolute",
+    right: 18,
+    gap: 8,
+  },
+  fabMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 0.5,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  fabMenuLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
   },
   fab: {
     position: "absolute",
-    right: 20,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    right: 18,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,
     shadowColor: "#D4AF37",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
   },
 });
