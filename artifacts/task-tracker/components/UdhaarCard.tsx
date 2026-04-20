@@ -2,6 +2,11 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { memo } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 import { Udhaar } from "@/context/UdhaarContext";
 import { useColors } from "@/hooks/useColors";
@@ -37,6 +42,11 @@ function UdhaarCard({ entry, onOpenLedger, onDelete }: UdhaarCardProps) {
   const progress = entry.amount > 0 ? (entry.settled_amount / entry.amount) * 100 : 0;
   const isOverdue = entry.due_date && new Date(entry.due_date) < new Date() && entry.status === "Active";
 
+  const cardScale = useSharedValue(1);
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
   const handleDelete = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -54,8 +64,14 @@ function UdhaarCard({ entry, onOpenLedger, onDelete }: UdhaarCardProps) {
   };
 
   return (
-    <View
+    <Pressable
+      onPressIn={() => { cardScale.value = withSpring(0.975, { damping: 14, stiffness: 200 }); }}
+      onPressOut={() => { cardScale.value = withSpring(1, { damping: 12, stiffness: 180 }); }}
+      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onOpenLedger(entry); }}
+    >
+    <Animated.View
       style={[
+        cardStyle,
         styles.card,
         {
           backgroundColor: colors.card,
@@ -154,7 +170,8 @@ function UdhaarCard({ entry, onOpenLedger, onDelete }: UdhaarCardProps) {
           <Text style={[styles.settledBadgeText, { color: colors.success }]}>Fully Settled</Text>
         </View>
       )}
-    </View>
+    </Animated.View>
+    </Pressable>
   );
 }
 

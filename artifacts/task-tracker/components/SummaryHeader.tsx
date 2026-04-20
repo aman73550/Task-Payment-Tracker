@@ -1,12 +1,41 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeInDown,
+  FadeInLeft,
+  useAnimatedProps,
+  useSharedValue,
+  withTiming,
+  Easing,
+} from "react-native-reanimated";
 
 import { Task } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
 function rupeeFormat(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
+}
+
+function AnimatedNumber({ target, prefix = "₹" }: { target: number; prefix?: string }) {
+  const progress = useSharedValue(0);
+  const [display, setDisplay] = React.useState(0);
+
+  useEffect(() => {
+    progress.value = 0;
+    const duration = 900;
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(eased * target));
+      if (t >= 1) clearInterval(interval);
+    }, 16);
+    return () => clearInterval(interval);
+  }, [target]);
+
+  return <Text>{prefix}{display.toLocaleString("en-IN")}</Text>;
 }
 
 export default function SummaryHeader({ tasks }: { tasks: Task[] }) {
@@ -24,13 +53,18 @@ export default function SummaryHeader({ tasks }: { tasks: Task[] }) {
 
   return (
     <View style={[styles.wrapper, { borderBottomColor: colors.goldBorder }]}>
-      <Text style={[styles.wordmark, { color: colors.gold }]}>Payment Tracker</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        your command center
-      </Text>
+      <Animated.View entering={FadeInLeft.delay(0).duration(500)}>
+        <Text style={[styles.wordmark, { color: colors.gold }]}>Payment Tracker</Text>
+      </Animated.View>
+      <Animated.View entering={FadeInLeft.delay(80).duration(500)}>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>your command center</Text>
+      </Animated.View>
 
       <View style={styles.topRow}>
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+        <Animated.View
+          entering={FadeInDown.delay(140).duration(500).springify().damping(16)}
+          style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+        >
           <Feather name="clock" size={13} color={colors.champagne} strokeWidth={1.5} />
           <Text style={[styles.heroLabel, { color: colors.mutedForeground }]}>
             Money in the cloud
@@ -38,9 +72,12 @@ export default function SummaryHeader({ tasks }: { tasks: Task[] }) {
           <Text style={[styles.heroValue, { color: colors.champagne }]}>
             {rupeeFormat(moneyInCloud)}
           </Text>
-        </View>
+        </Animated.View>
 
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+        <Animated.View
+          entering={FadeInDown.delay(210).duration(500).springify().damping(16)}
+          style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+        >
           <Feather name="check-circle" size={13} color={colors.success} strokeWidth={1.5} />
           <Text style={[styles.heroLabel, { color: colors.mutedForeground }]}>
             Money in pocket
@@ -48,21 +85,27 @@ export default function SummaryHeader({ tasks }: { tasks: Task[] }) {
           <Text style={[styles.heroValue, { color: colors.success }]}>
             {rupeeFormat(moneyInPocket)}
           </Text>
-        </View>
+        </Animated.View>
       </View>
 
       <View style={styles.bottomRow}>
-        <View style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+        <Animated.View
+          entering={FadeInDown.delay(280).duration(450).springify().damping(16)}
+          style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+        >
           <Feather name="zap" size={11} color={colors.gold} strokeWidth={1.5} />
           <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Live jobs </Text>
           <Text style={[styles.statValue, { color: colors.pearl }]}>{liveJobs}</Text>
-        </View>
+        </Animated.View>
 
-        <View style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+        <Animated.View
+          entering={FadeInDown.delay(340).duration(450).springify().damping(16)}
+          style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
+        >
           <Feather name="calendar" size={11} color={colors.gold} strokeWidth={1.5} />
           <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>This month </Text>
           <Text style={[styles.statValue, { color: colors.pearl }]}>{rupeeFormat(thisMonthEarnings)}</Text>
-        </View>
+        </Animated.View>
       </View>
     </View>
   );

@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { StatusBar } from "expo-status-bar";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -14,6 +14,18 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Reanimated, {
+  FadeInDown,
+  FadeInUp,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +35,46 @@ const BG = "#080808";
 const PEARL = "#F4F4F4";
 const MUTED = "#6B6254";
 const ERROR_BG = "#1A0A0A";
+
+function GoldRingLogo() {
+  const ringScale = useSharedValue(1);
+  const ringOpacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    ringScale.value = withRepeat(
+      withSequence(
+        withTiming(1.25, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+    ringOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.15, { duration: 1800 }),
+        withTiming(0.5, { duration: 1800 })
+      ),
+      -1,
+      false
+    );
+  }, []);
+
+  const outerRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: ringScale.value }],
+    opacity: ringOpacity.value,
+  }));
+
+  return (
+    <Reanimated.View entering={ZoomIn.delay(80).springify().damping(14)}>
+      <View style={styles.logoRingWrap}>
+        <Reanimated.View style={[styles.outerRing, outerRingStyle]} />
+        <View style={styles.logoRing}>
+          <Feather name="briefcase" size={22} color={GOLD} strokeWidth={1.5} />
+        </View>
+      </View>
+    </Reanimated.View>
+  );
+}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -39,18 +91,28 @@ export default function LoginScreen() {
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  const btnScale = useSharedValue(1);
+  const btnStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: btnScale.value }],
+  }));
+
   const shake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 6, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -6, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 9, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -9, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 7, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -7, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 4, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
   };
 
   const handleSubmit = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    btnScale.value = withSequence(
+      withSpring(0.95, { damping: 12 }),
+      withSpring(1, { damping: 12 })
+    );
     setError("");
     setSuccess("");
     setLoading(true);
@@ -77,120 +139,128 @@ export default function LoginScreen() {
       <StatusBar style="light" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.logoArea}>
-            <View style={styles.logoRing}>
-              <Feather name="briefcase" size={22} color={GOLD} strokeWidth={1.5} />
-            </View>
-            <Text style={styles.appName}>Aman's Tracker</Text>
-          </View>
+          <Reanimated.View entering={FadeInDown.delay(0).duration(600)} style={styles.logoArea}>
+            <GoldRingLogo />
+            <Reanimated.View entering={FadeInDown.delay(140).duration(500)}>
+              <Text style={styles.appName}>Aman's Tracker</Text>
+            </Reanimated.View>
+          </Reanimated.View>
 
-          <Animated.View style={[styles.formCard, { transform: [{ translateX: shakeAnim }] }]}>
-            <Text style={styles.greeting}>
-              {mode === "login" ? "Welcome back." : "Create account."}
-            </Text>
-            <Text style={styles.subGreeting}>
-              {mode === "login"
-                ? "Your records are waiting."
-                : "Start tracking tasks and udhaar."}
-            </Text>
+          <Animated.View style={[{ transform: [{ translateX: shakeAnim }] }]}>
+            <Reanimated.View entering={FadeInUp.delay(220).duration(500).springify().damping(16)} style={styles.formCard}>
+              <Text style={styles.greeting}>
+                {mode === "login" ? "Welcome back." : "Create account."}
+              </Text>
+              <Text style={styles.subGreeting}>
+                {mode === "login"
+                  ? "Your records are waiting."
+                  : "Start tracking tasks and udhaar."}
+              </Text>
 
-            {mode === "register" && (
-              <View style={styles.inputBlock}>
+              {mode === "register" && (
+                <Reanimated.View entering={FadeInDown.duration(300).springify()} style={styles.inputBlock}>
+                  <View style={styles.inputRow}>
+                    <Feather name="user" size={16} color={MUTED} strokeWidth={1.5} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Your name"
+                      placeholderTextColor={MUTED}
+                      value={name}
+                      onChangeText={setName}
+                      autoCapitalize="words"
+                      returnKeyType="next"
+                    />
+                  </View>
+                  <View style={styles.inputBorder} />
+                </Reanimated.View>
+              )}
+
+              <Reanimated.View entering={FadeInDown.delay(280).duration(400)} style={styles.inputBlock}>
                 <View style={styles.inputRow}>
-                  <Feather name="user" size={16} color={MUTED} strokeWidth={1.5} />
+                  <Feather name="phone" size={16} color={MUTED} strokeWidth={1.5} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Your name"
+                    placeholder="Mobile number"
                     placeholderTextColor={MUTED}
-                    value={name}
-                    onChangeText={setName}
-                    autoCapitalize="words"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
                     returnKeyType="next"
+                    textContentType="telephoneNumber"
                   />
                 </View>
                 <View style={styles.inputBorder} />
-              </View>
-            )}
+              </Reanimated.View>
 
-            <View style={styles.inputBlock}>
-              <View style={styles.inputRow}>
-                <Feather name="phone" size={16} color={MUTED} strokeWidth={1.5} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Mobile number"
-                  placeholderTextColor={MUTED}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                  textContentType="telephoneNumber"
-                />
-              </View>
-              <View style={styles.inputBorder} />
-            </View>
+              <Reanimated.View entering={FadeInDown.delay(340).duration(400)} style={styles.inputBlock}>
+                <View style={styles.inputRow}>
+                  <Feather name="lock" size={16} color={MUTED} strokeWidth={1.5} />
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="Password"
+                    placeholderTextColor={MUTED}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmit}
+                    textContentType={mode === "register" ? "newPassword" : "password"}
+                  />
+                  <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+                    <Feather name={showPassword ? "eye-off" : "eye"} size={15} color={MUTED} strokeWidth={1.5} />
+                  </Pressable>
+                </View>
+                <View style={styles.inputBorder} />
+              </Reanimated.View>
 
-            <View style={styles.inputBlock}>
-              <View style={styles.inputRow}>
-                <Feather name="lock" size={16} color={MUTED} strokeWidth={1.5} />
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="Password"
-                  placeholderTextColor={MUTED}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
-                  textContentType={mode === "register" ? "newPassword" : "password"}
-                />
-                <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
-                  <Feather name={showPassword ? "eye-off" : "eye"} size={15} color={MUTED} strokeWidth={1.5} />
-                </Pressable>
-              </View>
-              <View style={styles.inputBorder} />
-            </View>
-
-            {!!error && (
-              <View style={styles.errorBox}>
-                <Feather name="alert-circle" size={13} color="#E85D4A" strokeWidth={1.5} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
-            {!!success && (
-              <View style={styles.successBox}>
-                <Feather name="check-circle" size={13} color={GOLD} strokeWidth={1.5} />
-                <Text style={styles.successText}>{success}</Text>
-              </View>
-            )}
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading}
-              style={({ pressed }) => [styles.btn, { opacity: pressed || loading ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
-            >
-              {loading ? (
-                <ActivityIndicator color={BG} size="small" />
-              ) : (
-                <Text style={styles.btnText}>{mode === "login" ? "Sign In" : "Create Account"}</Text>
+              {!!error && (
+                <Reanimated.View entering={FadeInDown.duration(250)} style={styles.errorBox}>
+                  <Feather name="alert-circle" size={13} color="#E85D4A" strokeWidth={1.5} />
+                  <Text style={styles.errorText}>{error}</Text>
+                </Reanimated.View>
               )}
-            </Pressable>
 
-            <Pressable
-              onPress={() => {
-                setMode((m) => (m === "login" ? "register" : "login"));
-                setError(""); setSuccess("");
-              }}
-              style={styles.switchRow}
-            >
-              <Text style={styles.switchText}>
-                {mode === "login" ? "New here? " : "Already have an account? "}
-                <Text style={{ color: GOLD }}>{mode === "login" ? "Register" : "Sign in"}</Text>
-              </Text>
-            </Pressable>
+              {!!success && (
+                <Reanimated.View entering={FadeInDown.duration(250)} style={styles.successBox}>
+                  <Feather name="check-circle" size={13} color={GOLD} strokeWidth={1.5} />
+                  <Text style={styles.successText}>{success}</Text>
+                </Reanimated.View>
+              )}
+
+              <Reanimated.View entering={FadeInUp.delay(400).duration(400)} style={btnStyle}>
+                <Pressable
+                  onPress={handleSubmit}
+                  disabled={loading}
+                  style={({ pressed }) => [styles.btn, { opacity: pressed || loading ? 0.85 : 1 }]}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={BG} size="small" />
+                  ) : (
+                    <Text style={styles.btnText}>{mode === "login" ? "Sign In" : "Create Account"}</Text>
+                  )}
+                </Pressable>
+              </Reanimated.View>
+
+              <Reanimated.View entering={FadeInUp.delay(460).duration(400)}>
+                <Pressable
+                  onPress={() => {
+                    setMode((m) => (m === "login" ? "register" : "login"));
+                    setError(""); setSuccess("");
+                  }}
+                  style={styles.switchRow}
+                >
+                  <Text style={styles.switchText}>
+                    {mode === "login" ? "New here? " : "Already have an account? "}
+                    <Text style={{ color: GOLD }}>{mode === "login" ? "Register" : "Sign in"}</Text>
+                  </Text>
+                </Pressable>
+              </Reanimated.View>
+            </Reanimated.View>
           </Animated.View>
 
-          <Text style={styles.footer}>Everything is synced and safe.</Text>
+          <Reanimated.View entering={FadeInUp.delay(520).duration(400)}>
+            <Text style={styles.footer}>Everything is synced and safe.</Text>
+          </Reanimated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -201,6 +271,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 32 },
   logoArea: { alignItems: "center", marginBottom: 40, gap: 12 },
+  logoRingWrap: { width: 52, height: 52, alignItems: "center", justifyContent: "center" },
+  outerRing: {
+    position: "absolute",
+    width: 52, height: 52, borderRadius: 26,
+    borderWidth: 1, borderColor: GOLD,
+  },
   logoRing: {
     width: 52, height: 52, borderRadius: 26,
     borderWidth: 1, borderColor: GOLD + "50",

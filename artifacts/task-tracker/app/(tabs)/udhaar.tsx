@@ -10,9 +10,11 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, { FadeInRight, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AddUdhaarModal from "@/components/AddUdhaarModal";
+import AnimatedListItem from "@/components/AnimatedListItem";
 import UdhaarLedgerModal from "@/components/UdhaarLedgerModal";
 import UdhaarCard from "@/components/UdhaarCard";
 import { Udhaar, UdhaarType, useUdhaar } from "@/context/UdhaarContext";
@@ -97,8 +99,10 @@ export default function UdhaarScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <UdhaarCard entry={item} onOpenLedger={setLedgerEntry} onDelete={deleteUdhaar} />
+        renderItem={({ item, index }) => (
+          <AnimatedListItem index={index}>
+            <UdhaarCard entry={item} onOpenLedger={setLedgerEntry} onDelete={deleteUdhaar} />
+          </AnimatedListItem>
         )}
         renderSectionHeader={({ section }) =>
           section.title === "Settled History" ? (

@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,9 +12,18 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AddTaskModal from "@/components/AddTaskModal";
+import AnimatedListItem from "@/components/AnimatedListItem";
 import BulkAddModal from "@/components/BulkAddModal";
 import SummaryHeader from "@/components/SummaryHeader";
 import TaskCard from "@/components/TaskCard";
@@ -51,6 +60,17 @@ export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
+  const fabRotation = useSharedValue(0);
+  const fabScale = useSharedValue(1);
+
+  const fabIconStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${fabRotation.value}deg` }],
+  }));
+
+  const fabBtnStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fabScale.value }],
+  }));
+
   useDeadlineNotifications(tasks);
 
   const topPad = Platform.OS === "web" ? 67 : 0;
@@ -79,7 +99,11 @@ export default function HomeScreen() {
 
   const toggleFab = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFabExpanded((v) => !v);
+    const next = !fabExpanded;
+    setFabExpanded(next);
+    fabRotation.value = withSpring(next ? 45 : 0, { damping: 14, stiffness: 180 });
+    fabScale.value = withSpring(0.88, { damping: 10 });
+    setTimeout(() => { fabScale.value = withSpring(1, { damping: 12 }); }, 80);
   };
 
   return (
@@ -87,7 +111,11 @@ export default function HomeScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(t) => t.id}
-        renderItem={({ item }) => <TaskCard task={item} />}
+        renderItem={({ item, index }) => (
+          <AnimatedListItem index={index}>
+            <TaskCard task={item} />
+          </AnimatedListItem>
+        )}
         ListHeaderComponent={
           <View>
             <SummaryHeader tasks={tasks} />
@@ -209,49 +237,55 @@ export default function HomeScreen() {
 
       {fabExpanded && (
         <View style={[styles.fabMenu, { bottom: bottomPad + 72 }]}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.fabMenuItem,
-              { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
-            ]}
-            onPress={() => { setFabExpanded(false); setShowBulk(true); }}
-          >
-            <Feather name="layers" size={15} color={colors.champagne} strokeWidth={1.5} />
-            <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Multiple</Text>
-          </Pressable>
+          <Animated.View entering={FadeInRight.delay(40).duration(220).springify()}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.fabMenuItem,
+                { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
+              ]}
+              onPress={() => { setFabExpanded(false); fabRotation.value = withSpring(0); setShowBulk(true); }}
+            >
+              <Feather name="layers" size={15} color={colors.champagne} strokeWidth={1.5} />
+              <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Multiple</Text>
+            </Pressable>
+          </Animated.View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.fabMenuItem,
-              { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
-            ]}
-            onPress={() => { setFabExpanded(false); setShowAdd(true); }}
-          >
-            <Feather name="plus-circle" size={15} color={colors.gold} strokeWidth={1.5} />
-            <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Single</Text>
-          </Pressable>
+          <Animated.View entering={FadeInRight.delay(0).duration(200).springify()}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.fabMenuItem,
+                { backgroundColor: colors.card, borderColor: colors.goldBorder, transform: [{ scale: pressed ? 0.97 : 1 }] },
+              ]}
+              onPress={() => { setFabExpanded(false); fabRotation.value = withSpring(0); setShowAdd(true); }}
+            >
+              <Feather name="plus-circle" size={15} color={colors.gold} strokeWidth={1.5} />
+              <Text style={[styles.fabMenuLabel, { color: colors.pearl }]}>Add Single</Text>
+            </Pressable>
+          </Animated.View>
         </View>
       )}
 
-      <Pressable
-        style={({ pressed }) => [
-          styles.fab,
-          {
-            backgroundColor: fabExpanded ? colors.secondary : colors.gold,
-            borderColor: colors.gold,
-            bottom: bottomPad + 16,
-            transform: [{ scale: pressed ? 0.95 : 1 }],
-          },
-        ]}
-        onPress={toggleFab}
-      >
-        <Feather
-          name={fabExpanded ? "x" : "plus"}
-          size={26}
-          color={fabExpanded ? colors.gold : colors.primaryForeground}
-          strokeWidth={1.5}
-        />
-      </Pressable>
+      <Animated.View style={[fabBtnStyle, { position: "absolute", right: 18, bottom: bottomPad + 16 }]}>
+        <Pressable
+          style={[
+            styles.fab,
+            {
+              backgroundColor: fabExpanded ? colors.secondary : colors.gold,
+              borderColor: colors.gold,
+            },
+          ]}
+          onPress={toggleFab}
+        >
+          <Animated.View style={fabIconStyle}>
+            <Feather
+              name="plus"
+              size={26}
+              color={fabExpanded ? colors.gold : colors.primaryForeground}
+              strokeWidth={1.5}
+            />
+          </Animated.View>
+        </Pressable>
+      </Animated.View>
 
       <AddTaskModal visible={showAdd} onClose={() => setShowAdd(false)} onAdd={addTask} />
       <BulkAddModal visible={showBulk} onClose={() => setShowBulk(false)} onSaveAll={bulkAddTasks} />
@@ -348,8 +382,6 @@ const styles = StyleSheet.create({
   },
   fabMenuLabel: { fontSize: 13, fontFamily: "Satoshi-Medium" },
   fab: {
-    position: "absolute",
-    right: 18,
     width: 56,
     height: 56,
     borderRadius: 28,
