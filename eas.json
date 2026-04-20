@@ -11,9 +11,9 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      }
+      },
+      "node": "18.13.0"
     },
     "preview": {
       "distribution": "internal",
@@ -21,9 +21,9 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      }
+      },
+      "node": "18.13.0"
     },
     "production": {
       "autoIncrement": true,
@@ -31,9 +31,9 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      }
+      },
+      "node": "18.13.0"
     }
   },
   "submit": {
