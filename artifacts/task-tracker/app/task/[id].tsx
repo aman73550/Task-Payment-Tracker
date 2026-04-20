@@ -207,6 +207,7 @@ export default function TaskDetailScreen() {
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(msg)}`);
   };
 
+  const topPad = Platform.OS === "web" ? 0 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   return (
@@ -214,7 +215,7 @@ export default function TaskDetailScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={[styles.topBar, { borderBottomColor: colors.goldBorder }]}>
+      <View style={[styles.topBar, { borderBottomColor: colors.goldBorder, paddingTop: topPad + 10 }]}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.55 : 1 }]}

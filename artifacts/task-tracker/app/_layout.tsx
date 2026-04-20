@@ -1,5 +1,4 @@
 import { useFonts } from "expo-font";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
@@ -14,8 +13,6 @@ import { TasksProvider } from "@/context/TasksContext";
 import { UdhaarProvider } from "@/context/UdhaarContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
-
-const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
@@ -57,14 +54,7 @@ export default function RootLayout() {
 
   if (!ready) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.light.background,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <View style={{ flex: 1, backgroundColor: colors.light.background, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={colors.light.gold} size="large" />
       </View>
     );
@@ -73,17 +63,15 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <TasksProvider>
-            <UdhaarProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </UdhaarProvider>
-          </TasksProvider>
-        </QueryClientProvider>
+        <TasksProvider>
+          <UdhaarProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <KeyboardProvider>
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </UdhaarProvider>
+        </TasksProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

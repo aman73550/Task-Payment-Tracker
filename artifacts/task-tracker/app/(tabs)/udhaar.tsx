@@ -27,7 +27,7 @@ function rupeeFormat(v: number) {
 
 export default function UdhaarScreen() {
   const colors = useColors();
-  const { entries, loading, addUdhaar, settlePartial, markFullySettled } = useUdhaar();
+  const { entries, loading, addUdhaar, settlePartial, markFullySettled, deleteUdhaar } = useUdhaar();
   const insets = useSafeAreaInsets();
   const [showAdd, setShowAdd] = useState(false);
   const [settleEntry, setSettleEntry] = useState<Udhaar | null>(null);
@@ -67,7 +67,7 @@ export default function UdhaarScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <UdhaarCard entry={item} onSettle={setSettleEntry} />
+          <UdhaarCard entry={item} onSettle={setSettleEntry} onDelete={deleteUdhaar} />
         )}
         renderSectionHeader={({ section }) => (
           section.title === "Settled History" ? (

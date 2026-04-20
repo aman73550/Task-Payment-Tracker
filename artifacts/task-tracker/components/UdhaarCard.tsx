@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React, { memo } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Udhaar } from "@/context/UdhaarContext";
 import { useColors } from "@/hooks/useColors";
@@ -16,8 +16,7 @@ function rupeeFormat(v: number) {
 function relativeDate(iso: string) {
   const d = new Date(iso);
   const now = new Date();
-  const diff = d.getTime() - now.getTime();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const days = Math.ceil((d.getTime() - now.getTime()) / 86400000);
   if (days < 0) return `${Math.abs(days)}d overdue`;
   if (days === 0) return "Due today";
   if (days === 1) return "Due tomorrow";
@@ -27,15 +26,32 @@ function relativeDate(iso: string) {
 interface UdhaarCardProps {
   entry: Udhaar;
   onSettle: (entry: Udhaar) => void;
+  onDelete: (id: string) => void;
 }
 
-export default function UdhaarCard({ entry, onSettle }: UdhaarCardProps) {
+function UdhaarCard({ entry, onSettle, onDelete }: UdhaarCardProps) {
   const colors = useColors();
   const isLent = entry.type === "Lent";
   const accentColor = isLent ? LENT_GOLD : BORROWED_GREY;
   const remaining = entry.amount - entry.settled_amount;
   const progress = entry.amount > 0 ? (entry.settled_amount / entry.amount) * 100 : 0;
   const isOverdue = entry.due_date && new Date(entry.due_date) < new Date() && entry.status === "Active";
+
+  const handleDelete = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      "Delete entry?",
+      `Remove "${entry.person_name}" from Udhaar?`,
+      [
+        { text: "Keep", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => onDelete(entry.id),
+        },
+      ]
+    );
+  };
 
   return (
     <View
@@ -75,6 +91,14 @@ export default function UdhaarCard({ entry, onSettle }: UdhaarCardProps) {
             </Text>
           )}
         </View>
+
+        <Pressable
+          onPress={handleDelete}
+          hitSlop={10}
+          style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, paddingLeft: 8 })}
+        >
+          <Feather name="trash-2" size={14} color={colors.destructive} strokeWidth={1.5} />
+        </Pressable>
       </View>
 
       {entry.due_date && entry.status === "Active" && (
@@ -97,10 +121,7 @@ export default function UdhaarCard({ entry, onSettle }: UdhaarCardProps) {
             <View
               style={[
                 styles.progressFill,
-                {
-                  width: `${Math.min(progress, 100)}%` as any,
-                  backgroundColor: accentColor,
-                },
+                { width: `${Math.min(progress, 100)}%` as any, backgroundColor: accentColor },
               ]}
             />
           </View>
@@ -137,6 +158,8 @@ export default function UdhaarCard({ entry, onSettle }: UdhaarCardProps) {
   );
 }
 
+export default memo(UdhaarCard);
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 10,
@@ -167,15 +190,8 @@ const styles = StyleSheet.create({
   remainingText: { fontSize: 10, fontFamily: "Satoshi-Regular" },
   dueDateRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   dueDateText: { fontSize: 11, fontFamily: "Satoshi-Medium" },
-  progressRail: {
-    height: 2,
-    borderRadius: 1,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 1,
-  },
+  progressRail: { height: 2, borderRadius: 1, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 1 },
   settleBtn: {
     flexDirection: "row",
     alignItems: "center",

@@ -44,27 +44,20 @@ function generateId() {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
 
+async function persistList(list: Udhaar[]) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
 export function UdhaarProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<Udhaar[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          setEntries(JSON.parse(stored));
-        }
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    })();
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => { if (stored) setEntries(JSON.parse(stored)); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
-
-  const persist = async (list: Udhaar[]) => {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  };
 
   const addUdhaar = useCallback(
     async (payload: Omit<Udhaar, "id" | "created_at" | "history" | "settled_amount" | "status">) => {
@@ -76,38 +69,35 @@ export function UdhaarProvider({ children }: { children: React.ReactNode }) {
         history: [],
         created_at: new Date().toISOString(),
       };
-      const updated = [entry, ...entries];
-      setEntries(updated);
-      await persist(updated);
+      setEntries((prev) => {
+        const next = [entry, ...prev];
+        persistList(next);
+        return next;
+      });
     },
-    [entries]
+    []
   );
 
-  const settlePartial = useCallback(
-    async (id: string, amount_paid: number, note: string) => {
-      const updated = entries.map((e) => {
+  const settlePartial = useCallback(async (id: string, amount_paid: number, note: string) => {
+    setEntries((prev) => {
+      const next = prev.map((e) => {
         if (e.id !== id) return e;
         const newSettled = e.settled_amount + amount_paid;
-        const isFullySettled = newSettled >= e.amount;
         return {
           ...e,
           settled_amount: newSettled,
-          status: (isFullySettled ? "Settled" : "Active") as UdhaarStatus,
-          history: [
-            ...e.history,
-            { date: new Date().toISOString(), amount_paid, note },
-          ],
+          status: (newSettled >= e.amount ? "Settled" : "Active") as UdhaarStatus,
+          history: [...e.history, { date: new Date().toISOString(), amount_paid, note }],
         };
       });
-      setEntries(updated);
-      await persist(updated);
-    },
-    [entries]
-  );
+      persistList(next);
+      return next;
+    });
+  }, []);
 
-  const markFullySettled = useCallback(
-    async (id: string) => {
-      const updated = entries.map((e) => {
+  const markFullySettled = useCallback(async (id: string) => {
+    setEntries((prev) => {
+      const next = prev.map((e) => {
         if (e.id !== id) return e;
         return {
           ...e,
@@ -119,20 +109,18 @@ export function UdhaarProvider({ children }: { children: React.ReactNode }) {
           ],
         };
       });
-      setEntries(updated);
-      await persist(updated);
-    },
-    [entries]
-  );
+      persistList(next);
+      return next;
+    });
+  }, []);
 
-  const deleteUdhaar = useCallback(
-    async (id: string) => {
-      const updated = entries.filter((e) => e.id !== id);
-      setEntries(updated);
-      await persist(updated);
-    },
-    [entries]
-  );
+  const deleteUdhaar = useCallback(async (id: string) => {
+    setEntries((prev) => {
+      const next = prev.filter((e) => e.id !== id);
+      persistList(next);
+      return next;
+    });
+  }, []);
 
   return (
     <UdhaarContext.Provider value={{ entries, loading, addUdhaar, settlePartial, markFullySettled, deleteUdhaar }}>

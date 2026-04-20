@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { Animated, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Task, useTasks } from "@/context/TasksContext";
@@ -47,7 +47,7 @@ function PulsingDot({ color }: { color: string }) {
   );
 }
 
-export default function TaskCard({ task }: { task: Task }) {
+function TaskCard({ task }: { task: Task }) {
   const colors = useColors();
   const { updateTask } = useTasks();
 
@@ -345,3 +345,5 @@ const styles = StyleSheet.create({
     fontFamily: "Satoshi-Medium",
   },
 });
+
+export default memo(TaskCard);
