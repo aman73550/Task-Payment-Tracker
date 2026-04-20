@@ -1,0 +1,14 @@
+**/.gradle
+**/.nx
+**/build
+**/dist
+**/.cache
+**/node_modules
+**/.git
+**/.github
+**/*.log
+**/android/build
+artifacts/api-server
+artifacts/mockup-sandbox
+lib
+scripts
