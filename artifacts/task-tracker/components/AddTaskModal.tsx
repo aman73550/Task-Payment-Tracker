@@ -28,8 +28,11 @@ interface AddTaskModalProps {
     total_amount: number;
     paid_amount: number;
     status: TaskStatus;
-    image_uri?: string;
+    work_done: boolean;
+    payment_received: boolean;
+    image_uris: string[];
     notes?: string;
+    deadline_at?: string;
   }) => void;
 }
 

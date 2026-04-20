@@ -99,7 +99,7 @@ export default function TaskCard({ task }: { task: Task }) {
   const thumbnailUri = task.image_uris?.[0];
 
   const leftBorderColor = isOverdue
-    ? "#CD7F32"
+    ? colors.warning
     : task.work_done
     ? colors.success
     : task.payment_received
@@ -112,7 +112,7 @@ export default function TaskCard({ task }: { task: Task }) {
         styles.card,
         {
           backgroundColor: colors.card,
-          borderColor: isOverdue ? "#CD7F3233" : colors.goldBorder,
+          borderColor: colors.goldBorder,
           borderLeftColor: leftBorderColor,
           transform: [{ scale: pressed ? 0.98 : 1 }],
         },
@@ -149,7 +149,7 @@ export default function TaskCard({ task }: { task: Task }) {
               </Text>
             </Text>
             {isOverdue && (
-              <Text style={[styles.amountNote, { color: "#CD7F32", fontFamily: "Inter_600SemiBold" }]}>
+              <Text style={[styles.amountNote, { color: colors.warning, fontFamily: "Inter_600SemiBold" }]}>
                 Overdue
               </Text>
             )}

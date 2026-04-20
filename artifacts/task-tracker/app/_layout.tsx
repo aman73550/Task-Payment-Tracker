@@ -19,6 +19,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import colors from "@/constants/colors";
 import { TasksProvider } from "@/context/TasksContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -30,7 +31,7 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#080808" },
+        contentStyle: { backgroundColor: colors.light.background },
         animation: "slide_from_right",
       }}
     >
@@ -67,8 +68,15 @@ export default function RootLayout() {
 
   if (!ready) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#080808", alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color="#D4AF37" size="large" />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.light.background,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator color={colors.light.gold} size="large" />
       </View>
     );
   }
