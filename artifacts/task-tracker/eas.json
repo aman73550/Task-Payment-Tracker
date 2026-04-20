@@ -16,6 +16,15 @@
         "PNPM_VERSION": "10.26.1"
       }
     },
+    "apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "PNPM_VERSION": "10.26.1"
+      }
+    },
     "production": {
       "env": {
         "PNPM_VERSION": "10.26.1"

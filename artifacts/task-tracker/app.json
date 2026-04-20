@@ -22,7 +22,7 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.anonymous.tasktracker"
+      "package": "com.paymenttracker.app"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
