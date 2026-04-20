@@ -144,12 +144,12 @@ export default function TaskCard({ task }: { task: Task }) {
           <View style={styles.amountsRow}>
             <Text style={[styles.amountNote, { color: colors.mutedForeground }]}>
               Billed{" "}
-              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
+              <Text style={{ color: colors.foreground, fontFamily: "Satoshi-Bold" }}>
                 {rupeeFormat(task.total_amount)}
               </Text>
             </Text>
             {isOverdue && (
-              <Text style={[styles.amountNote, { color: colors.warning, fontFamily: "Inter_600SemiBold" }]}>
+              <Text style={[styles.amountNote, { color: colors.warning, fontFamily: "Satoshi-Bold" }]}>
                 Overdue
               </Text>
             )}
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   taskTitle: {
     fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   amountsRow: {
     flexDirection: "row",
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   amountNote: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   deadlineRow: {
     flexDirection: "row",
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   deadlineLabel: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   progressRail: {
     height: 1.5,
@@ -342,6 +342,6 @@ const styles = StyleSheet.create({
   },
   dualBtnLabel: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
 });

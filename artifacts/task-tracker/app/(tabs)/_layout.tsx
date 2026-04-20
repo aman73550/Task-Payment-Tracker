@@ -66,9 +66,9 @@ function ClassicTabLayout() {
           title: "Payment Tracker",
           headerTitleStyle: {
             color: colors.gold,
-            fontSize: 13,
-            fontFamily: "PlayfairDisplay_700Bold",
-            letterSpacing: 2,
+            fontSize: 14,
+            fontFamily: "Satoshi-Black",
+            letterSpacing: 1.5,
           },
           tabBarIcon: ({ color }) =>
             isIOS ? (
@@ -77,7 +77,7 @@ function ClassicTabLayout() {
               <Feather name="list" size={21} color={color} strokeWidth={1.5} />
             ),
           tabBarLabel: "Tasks",
-          tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 11 },
+          tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
         }}
       />
       <Tabs.Screen
@@ -86,9 +86,9 @@ function ClassicTabLayout() {
           title: "Finance",
           headerTitleStyle: {
             color: colors.gold,
-            fontSize: 13,
-            fontFamily: "PlayfairDisplay_700Bold",
-            letterSpacing: 2,
+            fontSize: 14,
+            fontFamily: "Satoshi-Black",
+            letterSpacing: 1.5,
           },
           tabBarIcon: ({ color }) =>
             isIOS ? (
@@ -97,7 +97,7 @@ function ClassicTabLayout() {
               <Feather name="trending-up" size={21} color={color} strokeWidth={1.5} />
             ),
           tabBarLabel: "Finance",
-          tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 11 },
+          tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
         }}
       />
     </Tabs>

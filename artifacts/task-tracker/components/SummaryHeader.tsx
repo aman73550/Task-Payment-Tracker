@@ -79,12 +79,12 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontSize: 26,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 11,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 1,
     marginBottom: 10,
   },
@@ -102,12 +102,12 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     lineHeight: 14,
   },
   heroValue: {
     fontSize: 20,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
   },
   bottomRow: {
     flexDirection: "row",
@@ -125,10 +125,10 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   statValue: {
     fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
 });

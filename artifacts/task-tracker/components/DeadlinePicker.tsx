@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   triggerText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   backdrop: {
     flex: 1,
@@ -254,12 +254,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.3,
   },
   modalSub: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     marginTop: -8,
   },
   dateRow: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   datePartLabel: {
     fontSize: 9,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -288,11 +288,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 6,
     fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   dateSep: {
     fontSize: 18,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     paddingBottom: 8,
   },
   modalActions: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   modalConfirmBtn: {
     flex: 2,
@@ -319,13 +319,13 @@ const styles = StyleSheet.create({
   },
   modalConfirmText: {
     fontSize: 13,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 0.5,
   },
   webTextInput: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     paddingVertical: 2,
   },
 });

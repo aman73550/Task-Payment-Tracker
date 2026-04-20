@@ -236,21 +236,21 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   emptyHint: {
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   pageHeading: {
     fontSize: 30,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.3,
     marginTop: 8,
   },
   pageSubheading: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 0.8,
     marginBottom: 20,
     marginTop: 2,
@@ -270,13 +270,13 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     fontSize: 11,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   heroAmount: {
     fontSize: 38,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: -0.5,
   },
   heroDivider: {
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   heroStatValue: {
     fontSize: 19,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
   },
   overallProgressRow: {
     gap: 6,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   overallRatioText: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     textAlign: "right",
   },
   monthsSection: {
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: "PlayfairDisplay_600SemiBold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 0.3,
     marginBottom: 4,
   },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   monthName: {
     fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   monthBadge: {
     borderWidth: 0.5,
@@ -359,12 +359,12 @@ const styles = StyleSheet.create({
   },
   monthBadgeText: {
     fontSize: 9,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
     letterSpacing: 0.5,
   },
   taskCountNote: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   monthAmounts: {
     flexDirection: "row",
@@ -377,13 +377,13 @@ const styles = StyleSheet.create({
   },
   monthAmountLabel: {
     fontSize: 9,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   monthAmountValue: {
     fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   goldProgressLine: {
     height: 2,

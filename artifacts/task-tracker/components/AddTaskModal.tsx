@@ -279,11 +279,11 @@ const styles = StyleSheet.create({
   },
   cancelLabel: {
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   modalTitle: {
     fontSize: 15,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.5,
   },
   addButton: {
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   addButtonLabel: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   formScroll: {
     flex: 1,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 9,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 1.5,
   },
   textField: {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   multiLineField: {
     height: 100,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   statusOptionText: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   slipPickerArea: {
     borderWidth: 0.5,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   slipHint: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     textAlign: "center",
     paddingHorizontal: 20,
   },
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   },
   removePhotoLabel: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     alignSelf: "flex-end",
   },
   deadlineWrapper: {

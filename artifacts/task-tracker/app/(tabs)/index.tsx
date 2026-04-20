@@ -156,11 +156,11 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   emptyHint: {
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   fabMenu: {
     position: "absolute",
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   fabMenuLabel: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   fab: {
     position: "absolute",

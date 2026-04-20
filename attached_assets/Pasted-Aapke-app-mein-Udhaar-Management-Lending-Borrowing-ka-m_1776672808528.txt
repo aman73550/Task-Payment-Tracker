@@ -1,0 +1,78 @@
+Aapke app mein **"Udhaar Management" (Lending & Borrowing)** ka module judne ke baad ye ek complete financial diary ban jayega. Isse aap ye track kar paenge ki aapne kisko kitna paisa diya hai (Lent) aur aapne kis se kitna liya hai (Borrowed).
+
+Isko **"Modern Opulence"** theme mein hi rakhenge taaki aapka poora app ek jaisa dikhe. AI agent ke liye ye raha final **Udhaar Module** update:
+
+---
+
+### 💳 UPDATE: UDHAAR (LENDING & BORROWING) MODULE
+
+AI Agent ko ye specific instructions dein:
+
+#### 1. Database Update (New Table: `udhaar`)
+Parchhi (Tasks) se alag ek table banayein taaki accounting saaf rahe:
+```sql
+create table udhaar (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users not null,
+  person_name text not null,
+  amount decimal not null,
+  type text check (type in ('Give', 'Take')), -- Give: Aapne udhaar diya, Take: Aapne liya
+  status text check (status in ('Active', 'Settled')) default 'Active',
+  due_date timestamp with time zone,
+  history jsonb default '[]'::jsonb, -- Settlement records: [{date, amount_paid, note}]
+  created_at timestamp with time zone default now()
+);
+```
+
+#### 2. The "Udhaar Dashboard" (High-End View)
+Finance section ke andar ek alag tab hoga "Udhaar" naam se:
+* **Total To Receive (Aane Wala):** Jitna aapne udhaar diya hai (Give). Isko **Gold (#D4AF37)** mein dikhayein.
+* **Total To Pay (Dena Wala):** Jitna aapne udhaar liya hai (Take). Isko **Soft Grey (#A3A3A3)** mein dikhayein.
+* **Net Balance:** Dono ka difference, taaki aapko apni real position pata rahe.
+
+#### 3. Core Features: Add, Edit & Settle
+* **Add Udhaar:** Ek simple form jisme *Person Name*, *Amount*, *Type (Lent/Borrowed)* aur *Due Date* ho.
+* **Quick Settle Button:** Har record ke bagal mein ek "Settle" button ho. Agar koi partial payment (thoda paisa) wapas kare, toh wo seedhe `history` mein timestamp ke saath save ho jaye.
+* **Status Toggle:** Ek baar poora paisa settle ho jaye, toh entry ko "Settled" mark kar dein (ye main list se hat kar 'History' mein chali jayegi).
+
+#### 4. Design & Human-Touch
+* **Visual Cues:** Jo paisa aapko milna hai uske aage up-arrow (↗) aur jo dena hai uske aage down-arrow (↘).
+* **Conversational Reminders:** App aapko yaad dilaye: *"Aman, you need to collect ₹5,000 from [Name] today."*
+* **Flat Icons:** `ArrowUpRight`, `ArrowDownLeft`, `HandCoins` (1.5px stroke, Pearl White).
+
+---
+
+### 🛠️ Final Instruction Box for AI Agent (Udhaar Integration)
+
+Is text ko copy karke apne pichle instructions ke saath add kar dein:
+
+> **"FINANCIAL EXPANSION: UDHAAR (LENDING & BORROWING) SYSTEM"**
+>
+> **1. DUAL-ENTRY SYSTEM:**
+> - Implement a dedicated table/module for 'Udhaar'. 
+> - Support two types: **'Lent' (Give)** and **'Borrowed' (Take)**.
+> - Data must include: Person Name, Amount, Due Date, and a 'History' log for partial settlements.
+>
+> **2. UDHAAR COMMAND CENTER:**
+> - Create a dashboard with three main figures: **'Total Receivables'**, **'Total Payables'**, and **'Net Position'**.
+> - Use large, premium serif fonts for currency display.
+> - Styling: Lent items in Gold (#D4AF37), Borrowed items in Soft Grey (#A3A3A3).
+>
+> **3. SMART SETTLEMENTS:**
+> - Inside each Udhaar record, add a 'Settle Partial' button to record payments over time without deleting the main entry.
+> - Once fully paid, move the entry to a 'Settled History' section to keep the main dashboard clean.
+>
+> **4. HUMAN-CENTRIC UI:**
+> - Use 1.5px stroke flat icons for directions. 
+> - Toast notification after adding: "Udhaar entry recorded. Don't forget to collect on [Date]!"
+> - No complex graphs—just clean, high-contrast lists with asymmetric padding for a hand-crafted look."
+
+---
+
+### **Aapka Complete Project Structure ab ye hai:**
+1.  **Home Page:** Quick Task & Slip uploads (Bulk support).
+2.  **Task Details:** Timeline of photos, changes, and add-ons.
+3.  **Finance Hub:** Monthly earning dashboard + **Udhaar Tracking (Lena/Dena)**.
+4.  **Management:** Deadlines, Search, Filters, and Data Export.
+
+Ab ye app aapka **Personal Business Manager** ban chuka hai. AI agent ab isse ek hi baar mein build kar sakta hai. Kya aap build process shuru karne ke liye environment variables setup karne mein help chahte hain?

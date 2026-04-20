@@ -302,11 +302,11 @@ const styles = StyleSheet.create({
   },
   cancelLabel: {
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   headerTitle: {
     fontSize: 15,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.5,
   },
   saveAllBtn: {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   saveAllLabel: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   progressBanner: {
     paddingHorizontal: 16,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   progressMessage: {
     fontSize: 12,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   progressRail: {
     height: 3,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     marginBottom: 4,
   },
   rowCard: {
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   rowIndex: {
     fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 0.5,
   },
   rowInput: {
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   imagePickRow: {
     flexDirection: "row",
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   imagePickLabel: {
     flex: 1,
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   addRowBtn: {
     flexDirection: "row",
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   },
   addRowLabel: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   deadlineBulkWrapper: {
     borderWidth: 0.5,

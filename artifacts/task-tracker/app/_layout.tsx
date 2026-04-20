@@ -1,14 +1,4 @@
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
-import {
-  PlayfairDisplay_700Bold,
-  PlayfairDisplay_600SemiBold,
-} from "@expo-google-fonts/playfair-display";
+import { useFonts } from "expo-font";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -43,12 +33,10 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    PlayfairDisplay_700Bold,
-    PlayfairDisplay_600SemiBold,
+    "Satoshi-Regular": require("../assets/fonts/Satoshi-Regular.ttf"),
+    "Satoshi-Medium": require("../assets/fonts/Satoshi-Medium.ttf"),
+    "Satoshi-Bold": require("../assets/fonts/Satoshi-Bold.ttf"),
+    "Satoshi-Black": require("../assets/fonts/Satoshi-Black.ttf"),
   });
 
   const [timedOut, setTimedOut] = useState(false);

@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   },
   missingNote: {
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     textAlign: "center",
   },
   topBar: {
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     fontSize: 15,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.3,
     marginHorizontal: 8,
   },
@@ -615,13 +615,13 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   summaryFigure: {
     fontSize: 24,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
   },
   progressRail: {
     height: 2,
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   },
   ratioText: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     textAlign: "right",
   },
   section: {
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 9,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 1.5,
   },
   sectionTitleRow: {
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
   },
   addPhotoBtnLabel: {
     fontSize: 12,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   inputField: {
     borderWidth: 0.5,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   multiLineField: {
     height: 85,
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
   },
   statusChipText: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   photoGallery: {
     marginLeft: -2,
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
   },
   galleryIndexText: {
     fontSize: 9,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   addPhotoTile: {
     width: 90,
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   },
   noPhotoHint: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   whatsAppBtn: {
     flexDirection: "row",
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
   },
   whatsAppBtnText: {
     fontSize: 14,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Satoshi-Medium",
   },
   saveBtn: {
     borderRadius: 6,
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   },
   saveBtnLabel: {
     fontSize: 14,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Satoshi-Bold",
     letterSpacing: 1,
   },
   addonSection: {
@@ -766,12 +766,12 @@ const styles = StyleSheet.create({
   },
   addonTitle: {
     fontSize: 16,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.3,
   },
   addonSubtitle: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     lineHeight: 17,
     marginTop: -4,
   },
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
   },
   addonImgBtnLabel: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
   },
   addonSaveBtn: {
     flex: 1,
@@ -824,14 +824,14 @@ const styles = StyleSheet.create({
   },
   addonSaveBtnLabel: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Satoshi-Bold",
   },
   timelineSection: {
     gap: 0,
   },
   timelineTitle: {
     fontSize: 16,
-    fontFamily: "PlayfairDisplay_700Bold",
+    fontFamily: "Satoshi-Black",
     letterSpacing: 0.3,
     marginBottom: 16,
   },
@@ -862,12 +862,12 @@ const styles = StyleSheet.create({
   },
   timelineDate: {
     fontSize: 10,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     letterSpacing: 0.3,
   },
   timelineNote: {
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     lineHeight: 19,
   },
   timelineLinkRow: {
@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
   timelineLinkText: {
     flex: 1,
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Satoshi-Regular",
     textDecorationLine: "underline",
   },
   timelineImages: {
