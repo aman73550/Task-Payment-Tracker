@@ -1,19 +1,15 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { API_BASE, useApiHeaders } from "./AuthContext";
 
 export type UdhaarType = "Lent" | "Borrowed";
 export type UdhaarStatus = "Active" | "Settled";
+export type TransactionType = "Initial" | "Add" | "Reduce";
 
-export interface SettlementEntry {
-  date: string;
-  amount_paid: number;
+export interface TransactionEntry {
+  type: TransactionType;
+  amount: number;
   note: string;
+  date: string;
 }
 
 export interface Udhaar {
@@ -23,7 +19,7 @@ export interface Udhaar {
   type: UdhaarType;
   status: UdhaarStatus;
   due_date?: string;
-  history: SettlementEntry[];
+  history: TransactionEntry[];
   settled_amount: number;
   created_at: string;
 }
@@ -31,99 +27,82 @@ export interface Udhaar {
 interface UdhaarContextType {
   entries: Udhaar[];
   loading: boolean;
-  addUdhaar: (payload: Omit<Udhaar, "id" | "created_at" | "history" | "settled_amount" | "status">) => Promise<void>;
-  settlePartial: (id: string, amount_paid: number, note: string) => Promise<void>;
+  addUdhaar: (payload: { person_name: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => Promise<void>;
+  addTransaction: (id: string, type: "Add" | "Reduce", amount: number, note: string) => Promise<void>;
   markFullySettled: (id: string) => Promise<void>;
   deleteUdhaar: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const UdhaarContext = createContext<UdhaarContextType | null>(null);
-const STORAGE_KEY = "@udhaar_v1";
 
-function generateId() {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+interface UdhaarProviderProps {
+  children: React.ReactNode;
+  token: string | null;
 }
 
-async function persistList(list: Udhaar[]) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-export function UdhaarProvider({ children }: { children: React.ReactNode }) {
+export function UdhaarProvider({ children, token }: UdhaarProviderProps) {
   const [entries, setEntries] = useState<Udhaar[]>([]);
   const [loading, setLoading] = useState(true);
+  const headers = useApiHeaders();
+
+  const fetchFromAPI = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/udhaar`, { headers });
+      if (res.ok) {
+        const data: Udhaar[] = await res.json();
+        data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setEntries(data);
+      }
+    } catch {}
+    finally { setLoading(false); }
+  }, [token]);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((stored) => { if (stored) setEntries(JSON.parse(stored)); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    if (token) { setLoading(true); fetchFromAPI(); }
+    else { setEntries([]); setLoading(false); }
+  }, [token]);
 
-  const addUdhaar = useCallback(
-    async (payload: Omit<Udhaar, "id" | "created_at" | "history" | "settled_amount" | "status">) => {
-      const entry: Udhaar = {
-        ...payload,
-        id: generateId(),
-        status: "Active",
-        settled_amount: 0,
-        history: [],
-        created_at: new Date().toISOString(),
-      };
-      setEntries((prev) => {
-        const next = [entry, ...prev];
-        persistList(next);
-        return next;
-      });
-    },
-    []
-  );
+  const addUdhaar = useCallback(async (payload: { person_name: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => {
+    if (!token) return;
+    const res = await fetch(`${API_BASE}/udhaar`, { method: "POST", headers, body: JSON.stringify(payload) });
+    if (res.ok) {
+      const entry: Udhaar = await res.json();
+      setEntries((prev) => [entry, ...prev]);
+    }
+  }, [token, headers]);
 
-  const settlePartial = useCallback(async (id: string, amount_paid: number, note: string) => {
-    setEntries((prev) => {
-      const next = prev.map((e) => {
-        if (e.id !== id) return e;
-        const newSettled = e.settled_amount + amount_paid;
-        return {
-          ...e,
-          settled_amount: newSettled,
-          status: (newSettled >= e.amount ? "Settled" : "Active") as UdhaarStatus,
-          history: [...e.history, { date: new Date().toISOString(), amount_paid, note }],
-        };
-      });
-      persistList(next);
-      return next;
+  const addTransaction = useCallback(async (id: string, type: "Add" | "Reduce", amount: number, note: string) => {
+    if (!token) return;
+    const res = await fetch(`${API_BASE}/udhaar/${id}/transaction`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ type, amount, note }),
     });
-  }, []);
+    if (res.ok) {
+      const updated: Udhaar = await res.json();
+      setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    }
+  }, [token, headers]);
 
   const markFullySettled = useCallback(async (id: string) => {
-    setEntries((prev) => {
-      const next = prev.map((e) => {
-        if (e.id !== id) return e;
-        return {
-          ...e,
-          settled_amount: e.amount,
-          status: "Settled" as UdhaarStatus,
-          history: [
-            ...e.history,
-            { date: new Date().toISOString(), amount_paid: e.amount - e.settled_amount, note: "Marked as fully settled" },
-          ],
-        };
-      });
-      persistList(next);
-      return next;
-    });
-  }, []);
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) return;
+    const remaining = entry.amount - entry.settled_amount;
+    if (remaining > 0) {
+      await addTransaction(id, "Reduce", remaining, "Marked as fully settled");
+    }
+  }, [entries, addTransaction]);
 
   const deleteUdhaar = useCallback(async (id: string) => {
-    setEntries((prev) => {
-      const next = prev.filter((e) => e.id !== id);
-      persistList(next);
-      return next;
-    });
-  }, []);
+    if (!token) return;
+    await fetch(`${API_BASE}/udhaar/${id}`, { method: "DELETE", headers });
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  }, [token, headers]);
 
   return (
-    <UdhaarContext.Provider value={{ entries, loading, addUdhaar, settlePartial, markFullySettled, deleteUdhaar }}>
+    <UdhaarContext.Provider value={{ entries, loading, addUdhaar, addTransaction, markFullySettled, deleteUdhaar, refresh: fetchFromAPI }}>
       {children}
     </UdhaarContext.Provider>
   );

@@ -25,11 +25,11 @@ function relativeDate(iso: string) {
 
 interface UdhaarCardProps {
   entry: Udhaar;
-  onSettle: (entry: Udhaar) => void;
+  onOpenLedger: (entry: Udhaar) => void;
   onDelete: (id: string) => void;
 }
 
-function UdhaarCard({ entry, onSettle, onDelete }: UdhaarCardProps) {
+function UdhaarCard({ entry, onOpenLedger, onDelete }: UdhaarCardProps) {
   const colors = useColors();
   const isLent = entry.type === "Lent";
   const accentColor = isLent ? LENT_GOLD : BORROWED_GREY;
@@ -129,7 +129,7 @@ function UdhaarCard({ entry, onSettle, onDelete }: UdhaarCardProps) {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onSettle(entry);
+              onOpenLedger(entry);
             }}
             style={({ pressed }) => [
               styles.settleBtn,
@@ -140,9 +140,9 @@ function UdhaarCard({ entry, onSettle, onDelete }: UdhaarCardProps) {
               },
             ]}
           >
-            <Feather name="check" size={13} color={accentColor} strokeWidth={1.5} />
+            <Feather name="book-open" size={13} color={accentColor} strokeWidth={1.5} />
             <Text style={[styles.settleBtnLabel, { color: accentColor }]}>
-              {entry.settled_amount > 0 ? "Record More / Settle" : "Record Settlement"}
+              View Ledger
             </Text>
           </Pressable>
         </>

@@ -9,8 +9,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import colors from "@/constants/colors";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { TasksProvider } from "@/context/TasksContext";
 import { UdhaarProvider } from "@/context/UdhaarContext";
+import LoginScreen from "@/app/login";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -26,6 +28,34 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="task/[id]" options={{ headerShown: false, presentation: "card" }} />
     </Stack>
+  );
+}
+
+function AppWithAuth() {
+  const { user, token, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#080808", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="#D4AF37" size="large" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  return (
+    <TasksProvider token={token}>
+      <UdhaarProvider token={token}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <KeyboardProvider>
+            <RootLayoutNav />
+          </KeyboardProvider>
+        </GestureHandlerRootView>
+      </UdhaarProvider>
+    </TasksProvider>
   );
 }
 
@@ -63,15 +93,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <TasksProvider>
-          <UdhaarProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
-          </UdhaarProvider>
-        </TasksProvider>
+        <AuthProvider>
+          <AppWithAuth />
+        </AuthProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

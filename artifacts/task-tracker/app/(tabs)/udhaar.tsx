@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AddUdhaarModal from "@/components/AddUdhaarModal";
-import PartialSettleModal from "@/components/PartialSettleModal";
+import UdhaarLedgerModal from "@/components/UdhaarLedgerModal";
 import UdhaarCard from "@/components/UdhaarCard";
 import { Udhaar, UdhaarType, useUdhaar } from "@/context/UdhaarContext";
 import { useColors } from "@/hooks/useColors";
@@ -43,10 +43,10 @@ function sortEntries(list: Udhaar[], mode: SortMode): Udhaar[] {
 
 export default function UdhaarScreen() {
   const colors = useColors();
-  const { entries, loading, addUdhaar, settlePartial, markFullySettled, deleteUdhaar } = useUdhaar();
+  const { entries, loading, addUdhaar, deleteUdhaar } = useUdhaar();
   const insets = useSafeAreaInsets();
   const [showAdd, setShowAdd] = useState(false);
-  const [settleEntry, setSettleEntry] = useState<Udhaar | null>(null);
+  const [ledgerEntry, setLedgerEntry] = useState<Udhaar | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("All");
   const [sortMode, setSortMode] = useState<SortMode>("date");
 
@@ -98,7 +98,7 @@ export default function UdhaarScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <UdhaarCard entry={item} onSettle={setSettleEntry} onDelete={deleteUdhaar} />
+          <UdhaarCard entry={item} onOpenLedger={setLedgerEntry} onDelete={deleteUdhaar} />
         )}
         renderSectionHeader={({ section }) =>
           section.title === "Settled History" ? (
@@ -250,12 +250,10 @@ export default function UdhaarScreen() {
 
       <AddUdhaarModal visible={showAdd} onClose={() => setShowAdd(false)} onAdd={addUdhaar} />
 
-      <PartialSettleModal
-        visible={!!settleEntry}
-        entry={settleEntry}
-        onClose={() => setSettleEntry(null)}
-        onSettle={(amount, note) => { if (settleEntry) settlePartial(settleEntry.id, amount, note); }}
-        onFullSettle={() => { if (settleEntry) markFullySettled(settleEntry.id); }}
+      <UdhaarLedgerModal
+        visible={!!ledgerEntry}
+        entry={ledgerEntry}
+        onClose={() => setLedgerEntry(null)}
       />
     </View>
   );
