@@ -11,7 +11,11 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm"
+        "PNPM_HOME": "/root/.pnpm",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      },
+      "npm": {
+        "extra": ["--no-audit"]
       }
     },
     "preview": {
@@ -20,7 +24,11 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm"
+        "PNPM_HOME": "/root/.pnpm",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      },
+      "npm": {
+        "extra": ["--no-audit"]
       }
     },
     "production": {
@@ -29,7 +37,11 @@
         "resourceClass": "default"
       },
       "env": {
-        "PNPM_HOME": "/root/.pnpm"
+        "PNPM_HOME": "/root/.pnpm",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      },
+      "npm": {
+        "extra": ["--no-audit"]
       }
     }
   },
