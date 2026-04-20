@@ -13,9 +13,6 @@
       "env": {
         "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      },
-      "npm": {
-        "extra": ["--no-audit"]
       }
     },
     "preview": {
@@ -26,9 +23,6 @@
       "env": {
         "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      },
-      "npm": {
-        "extra": ["--no-audit"]
       }
     },
     "production": {
@@ -39,9 +33,6 @@
       "env": {
         "PNPM_HOME": "/root/.pnpm",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      },
-      "npm": {
-        "extra": ["--no-audit"]
       }
     }
   },
