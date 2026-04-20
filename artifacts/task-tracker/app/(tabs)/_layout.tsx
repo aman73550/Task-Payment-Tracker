@@ -21,6 +21,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
         <Label>Finance</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="udhaar">
+        <Icon sf={{ default: "arrow.left.arrow.right", selected: "arrow.left.arrow.right" }} />
+        <Label>Udhaar</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -50,11 +54,7 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={100}
-              tint="light"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={100} tint="light" style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
@@ -97,6 +97,26 @@ function ClassicTabLayout() {
               <Feather name="trending-up" size={21} color={color} strokeWidth={1.5} />
             ),
           tabBarLabel: "Finance",
+          tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
+        }}
+      />
+      <Tabs.Screen
+        name="udhaar"
+        options={{
+          title: "Udhaar",
+          headerTitleStyle: {
+            color: colors.gold,
+            fontSize: 14,
+            fontFamily: "Satoshi-Black",
+            letterSpacing: 1.5,
+          },
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="arrow.left.arrow.right" tintColor={color} size={22} />
+            ) : (
+              <Feather name="repeat" size={21} color={color} strokeWidth={1.5} />
+            ),
+          tabBarLabel: "Udhaar",
           tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
         }}
       />
