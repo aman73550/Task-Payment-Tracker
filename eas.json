@@ -9,18 +9,27 @@
       "distribution": "internal",
       "android": {
         "resourceClass": "default"
+      },
+      "env": {
+        "PNPM_HOME": "/root/.pnpm"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "resourceClass": "default"
+      },
+      "env": {
+        "PNPM_HOME": "/root/.pnpm"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "resourceClass": "default"
+      },
+      "env": {
+        "PNPM_HOME": "/root/.pnpm"
       }
     }
   },
