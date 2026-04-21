@@ -39,11 +39,13 @@ function applyFilters(tasks: Task[], filter: FilterTab, query: string): Task[] {
   let result = tasks;
   if (query.trim()) {
     const q = query.toLowerCase();
-    result = result.filter((t) => t.task_name.toLowerCase().includes(q));
+    result = result.filter((t) => t.task_name.toLowerCase().includes(q) || (t.person_name ?? "").toLowerCase().includes(q));
   }
   if (filter === "Overdue") {
     result = result.filter((t) => t.deadline_at && getDeadlineState(t.deadline_at) === "overdue" && t.status !== "Completed");
-  } else if (filter !== "All") {
+  } else if (filter === "All") {
+    result = result.filter((t) => t.status !== "Completed");
+  } else {
     result = result.filter((t) => t.status === filter);
   }
   return result;
@@ -59,6 +61,7 @@ export default function HomeScreen() {
   const [filter, setFilter] = useState<FilterTab>("All");
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const fabRotation = useSharedValue(0);
   const fabScale = useSharedValue(1);
@@ -77,6 +80,11 @@ export default function HomeScreen() {
   const bottomPad = Platform.OS === "web" ? 34 + 50 : insets.bottom + 84;
 
   const filtered = useMemo(() => applyFilters(tasks, filter, search), [tasks, filter, search]);
+
+  const completedTasks = useMemo(
+    () => (filter === "All" && !search) ? tasks.filter((t) => t.status === "Completed").sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [],
+    [tasks, filter, search]
+  );
 
   const overdueCount = useMemo(
     () => tasks.filter((t) => t.deadline_at && getDeadlineState(t.deadline_at) === "overdue" && t.status !== "Completed").length,
@@ -225,6 +233,33 @@ export default function HomeScreen() {
               {search || filter !== "All" ? "Try a different filter" : "Tap + to log your first task"}
             </Text>
           </View>
+        }
+        ListFooterComponent={
+          completedTasks.length > 0 ? (
+            <View style={styles.historySection}>
+              <Pressable
+                onPress={() => { setHistoryExpanded(!historyExpanded); Haptics.selectionAsync(); }}
+                style={({ pressed }) => [
+                  styles.historyHeader,
+                  { borderColor: colors.goldBorder, backgroundColor: colors.card, opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <View style={[styles.historyDivider, { backgroundColor: colors.goldBorder }]} />
+                <Feather name="clock" size={12} color={colors.mutedForeground} strokeWidth={1.5} />
+                <Text style={[styles.historyTitle, { color: colors.mutedForeground }]}>
+                  History · {completedTasks.length} completed
+                </Text>
+                <Feather name={historyExpanded ? "chevron-up" : "chevron-down"} size={14} color={colors.mutedForeground} strokeWidth={1.5} />
+                <View style={[styles.historyDivider, { backgroundColor: colors.goldBorder }]} />
+              </Pressable>
+
+              {historyExpanded && completedTasks.map((task, index) => (
+                <AnimatedListItem key={task.id} index={index}>
+                  <TaskCard task={task} />
+                </AnimatedListItem>
+              ))}
+            </View>
+          ) : null
         }
         contentContainerStyle={[
           styles.listContent,
@@ -389,4 +424,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  historySection: { marginTop: 8 },
+  historyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    marginBottom: 8,
+  },
+  historyDivider: { flex: 1, height: 0.5 },
+  historyTitle: { fontSize: 11, fontFamily: "Satoshi-Medium", letterSpacing: 0.5 },
 });

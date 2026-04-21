@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
@@ -71,6 +72,29 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
     onClose();
   };
 
+  const compressTo200kb = async (uri: string): Promise<string> => {
+    let quality = 0.7;
+    let width = 1200;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width } }],
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      const res = await fetch(result.uri);
+      const blob = await res.blob();
+      if (blob.size <= 200 * 1024) return result.uri;
+      quality = Math.max(quality - 0.15, 0.2);
+      width = Math.max(width - 200, 600);
+    }
+    const final = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 600 } }],
+      { compress: 0.2, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    return final.uri;
+  };
+
   const handlePickSlipPhoto = async () => {
     setPickingPhoto(true);
     try {
@@ -80,10 +104,31 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
       const pickerResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
-        quality: 0.7,
+        quality: 1,
       });
       if (!pickerResult.canceled && pickerResult.assets[0]) {
-        setSlipImageUri(pickerResult.assets[0].uri);
+        const compressed = await compressTo200kb(pickerResult.assets[0].uri);
+        setSlipImageUri(compressed);
+      }
+    } finally {
+      setPickingPhoto(false);
+    }
+  };
+
+  const handleCameraCapture = async () => {
+    setPickingPhoto(true);
+    try {
+      const permResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permResult.granted) return;
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 1,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const compressed = await compressTo200kb(result.assets[0].uri);
+        setSlipImageUri(compressed);
       }
     } finally {
       setPickingPhoto(false);
@@ -232,27 +277,60 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
 
           <View style={styles.formField}>
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>PAYMENT SLIP (OPTIONAL)</Text>
-            <Pressable
-              style={[styles.slipPickerArea, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}
-              onPress={handlePickSlipPhoto}
-            >
-              {pickingPhoto ? (
-                <ActivityIndicator color={colors.gold} />
-              ) : slipImageUri ? (
+
+            {slipImageUri ? (
+              <View style={[styles.slipPreviewWrap, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
                 <Image source={{ uri: slipImageUri }} style={styles.slipPreview} />
-              ) : (
-                <View style={styles.slipPlaceholder}>
-                  <Feather name="camera" size={22} color={colors.mutedForeground} strokeWidth={1.5} />
-                  <Text style={[styles.slipHint, { color: colors.mutedForeground }]}>
-                    Attach a slip or receipt photo
-                  </Text>
+                <Pressable
+                  onPress={() => setSlipImageUri(undefined)}
+                  style={[styles.removePhotoBtn, { backgroundColor: colors.destructive + "CC" }]}
+                >
+                  <Feather name="x" size={14} color="#fff" strokeWidth={2} />
+                </Pressable>
+                <View style={[styles.compressedBadge, { backgroundColor: colors.success + "CC" }]}>
+                  <Feather name="zap" size={9} color="#fff" strokeWidth={2} />
+                  <Text style={styles.compressedBadgeText}>≤200kb</Text>
                 </View>
-              )}
-            </Pressable>
-            {slipImageUri && (
-              <Pressable onPress={() => setSlipImageUri(undefined)}>
-                <Text style={[styles.removePhotoLabel, { color: colors.destructive }]}>Remove photo</Text>
-              </Pressable>
+              </View>
+            ) : pickingPhoto ? (
+              <View style={[styles.slipPickerArea, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
+                <ActivityIndicator color={colors.gold} />
+                <Text style={[styles.slipHint, { color: colors.mutedForeground }]}>Compressing...</Text>
+              </View>
+            ) : (
+              <View style={styles.photoButtonRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.photoBtn,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.gold + "80",
+                      transform: [{ scale: pressed ? 0.96 : 1 }],
+                    },
+                  ]}
+                  onPress={handleCameraCapture}
+                >
+                  <Feather name="camera" size={18} color={colors.gold} strokeWidth={1.5} />
+                  <Text style={[styles.photoBtnLabel, { color: colors.pearl }]}>Camera</Text>
+                  <Text style={[styles.photoBtnHint, { color: colors.mutedForeground }]}>auto-compress</Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.photoBtn,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.goldBorder,
+                      transform: [{ scale: pressed ? 0.96 : 1 }],
+                    },
+                  ]}
+                  onPress={handlePickSlipPhoto}
+                >
+                  <Feather name="image" size={18} color={colors.mutedForeground} strokeWidth={1.5} />
+                  <Text style={[styles.photoBtnLabel, { color: colors.pearl }]}>Gallery</Text>
+                  <Text style={[styles.photoBtnHint, { color: colors.mutedForeground }]}>pick from photos</Text>
+                </Pressable>
+              </View>
             )}
           </View>
 
@@ -397,5 +475,58 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 4,
+  },
+  photoButtonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  photoBtn: {
+    flex: 1,
+    borderWidth: 0.5,
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 6,
+  },
+  photoBtnLabel: {
+    fontSize: 13,
+    fontFamily: "Satoshi-Bold",
+  },
+  photoBtnHint: {
+    fontSize: 10,
+    fontFamily: "Satoshi-Regular",
+  },
+  slipPreviewWrap: {
+    height: 160,
+    borderWidth: 0.5,
+    borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+  },
+  removePhotoBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  compressedBadge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  compressedBadgeText: {
+    fontSize: 9,
+    fontFamily: "Satoshi-Bold",
+    color: "#fff",
   },
 });
