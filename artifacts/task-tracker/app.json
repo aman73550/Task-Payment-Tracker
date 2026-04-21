@@ -36,7 +36,8 @@
       ],
       "expo-font",
       "expo-image-picker",
-      "expo-contacts"
+      "expo-contacts",
+      "expo-image-manipulator"
     ],
     "experiments": {
       "typedRoutes": true,
