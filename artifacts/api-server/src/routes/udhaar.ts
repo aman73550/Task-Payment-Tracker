@@ -16,7 +16,7 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   const userId = (req as AuthedRequest).userId;
-  const body = req.body as { person_name: string; amount: number; type: string; due_date?: string; note?: string };
+  const body = req.body as { person_name: string; phone?: string; amount: number; type: string; due_date?: string; note?: string };
 
   if (!body.person_name || !body.amount || !body.type) {
     res.status(400).json({ error: "person_name, amount and type are required" });
@@ -33,6 +33,7 @@ router.post("/", async (req: Request, res: Response) => {
   const [entry] = await db.insert(udhaarTable).values({
     user_id: userId,
     person_name: body.person_name,
+    phone: body.phone,
     amount: body.amount,
     type: body.type,
     status: "Active",

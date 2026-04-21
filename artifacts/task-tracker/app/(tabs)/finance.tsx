@@ -1,10 +1,13 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -55,11 +58,47 @@ function groupByMonth(taskList: Task[]): MonthGroup[] {
     .sort((a, b) => b.key.localeCompare(a.key));
 }
 
+function buildTasksCSV(taskList: Task[]): string {
+  const headers = ["Task Name", "Person", "Phone", "Status", "Total (₹)", "Paid (₹)", "Pending (₹)", "Work Done", "Date"];
+  const rows = taskList.map((t) => [
+    `"${t.task_name.replace(/"/g, '""')}"`,
+    `"${(t.person_name ?? "").replace(/"/g, '""')}"`,
+    t.phone ?? "",
+    t.status,
+    t.total_amount,
+    t.paid_amount,
+    t.total_amount - t.paid_amount,
+    t.work_done ? "Yes" : "No",
+    new Date(t.created_at).toLocaleDateString("en-IN"),
+  ]);
+  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+}
+
 export default function FinanceScreen() {
   const colors = useColors();
   const { tasks } = useTasks();
   const insets = useSafeAreaInsets();
   const [showUnpaid, setShowUnpaid] = useState(true);
+
+  const handleExportCSV = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const csv = buildTasksCSV(tasks);
+    if (Platform.OS === "web") {
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tasks_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      try {
+        await Share.share({ message: csv, title: "Tasks Export" });
+      } catch {
+        Alert.alert("Couldn't export", "Try again in a moment.");
+      }
+    }
+  }, [tasks]);
 
   const netWorth = tasks.reduce((acc, t) => acc + t.total_amount, 0);
   const cashInHand = tasks.reduce((acc, t) => acc + t.paid_amount, 0);
@@ -97,10 +136,29 @@ export default function FinanceScreen() {
       contentContainerStyle={[styles.content, { paddingTop: topPad, paddingBottom: bottomPad }]}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.pageHeading, { color: colors.gold }]}>Your Money</Text>
-      <Text style={[styles.pageSubheading, { color: colors.mutedForeground }]}>
-        a clear picture of what you've earned
-      </Text>
+      <View style={styles.headingRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.pageHeading, { color: colors.gold }]}>Your Money</Text>
+          <Text style={[styles.pageSubheading, { color: colors.mutedForeground }]}>
+            a clear picture of what you've earned
+          </Text>
+        </View>
+        <Pressable
+          onPress={handleExportCSV}
+          style={({ pressed }) => [
+            styles.exportBtn,
+            {
+              backgroundColor: colors.gold + "18",
+              borderColor: colors.gold + "50",
+              opacity: pressed ? 0.7 : 1,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            },
+          ]}
+        >
+          <Feather name="download" size={13} color={colors.gold} strokeWidth={1.5} />
+          <Text style={[styles.exportBtnLabel, { color: colors.gold }]}>CSV</Text>
+        </Pressable>
+      </View>
 
       <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.goldBorder }]}>
         <View style={styles.heroTop}>
@@ -282,6 +340,18 @@ export default function FinanceScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: 16, gap: 0 },
+  headingRow: { flexDirection: "row", alignItems: "flex-end", marginBottom: 0 },
+  exportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 0.5,
+    borderRadius: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    marginBottom: 20,
+  },
+  exportBtnLabel: { fontSize: 12, fontFamily: "Satoshi-Bold" },
   emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   emptyTitle: { fontSize: 18, fontFamily: "Satoshi-Bold" },
   emptyHint: { fontSize: 13, fontFamily: "Satoshi-Regular" },

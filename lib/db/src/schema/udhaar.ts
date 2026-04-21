@@ -14,6 +14,7 @@ export const udhaarTable = pgTable("udhaar", {
   id: uuid("id").primaryKey().defaultRandom(),
   user_id: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   person_name: text("person_name").notNull(),
+  phone: text("phone"),
   amount: integer("amount").notNull().default(0),
   type: text("type").notNull(),
   status: text("status").notNull().default("Active"),

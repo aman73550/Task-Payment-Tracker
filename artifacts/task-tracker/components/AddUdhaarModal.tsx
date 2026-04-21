@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import ContactPickerButton from "@/components/ContactPickerButton";
 import DeadlinePicker from "@/components/DeadlinePicker";
 import { UdhaarType } from "@/context/UdhaarContext";
 import { useColors } from "@/hooks/useColors";
@@ -22,6 +23,7 @@ interface AddUdhaarModalProps {
   onClose: () => void;
   onAdd: (payload: {
     person_name: string;
+    phone?: string;
     amount: number;
     type: UdhaarType;
     due_date?: string;
@@ -34,12 +36,14 @@ const BORROWED_GREY = "#A3A3A3";
 export default function AddUdhaarModal({ visible, onClose, onAdd }: AddUdhaarModalProps) {
   const colors = useColors();
   const [personName, setPersonName] = useState("");
+  const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<UdhaarType>("Lent");
   const [dueDate, setDueDate] = useState<string | undefined>();
 
   const reset = () => {
     setPersonName("");
+    setPhone("");
     setAmount("");
     setType("Lent");
     setDueDate(undefined);
@@ -57,6 +61,7 @@ export default function AddUdhaarModal({ visible, onClose, onAdd }: AddUdhaarMod
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onAdd({
       person_name: personName.trim(),
+      phone: phone.trim() || undefined,
       amount: parseFloat(amount),
       type,
       due_date: dueDate,
@@ -148,14 +153,13 @@ export default function AddUdhaarModal({ visible, onClose, onAdd }: AddUdhaarMod
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>PERSON NAME</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.pearl, borderColor: colors.goldBorder }]}
-              placeholder="e.g. Rahul, Priya..."
-              placeholderTextColor={colors.mutedForeground}
-              value={personName}
-              onChangeText={setPersonName}
-              autoCapitalize="words"
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>PERSON</Text>
+            <ContactPickerButton
+              name={personName}
+              phone={phone}
+              onNameChange={setPersonName}
+              onPhoneChange={setPhone}
+              namePlaceholder="e.g. Rahul, Priya..."
             />
           </View>
 

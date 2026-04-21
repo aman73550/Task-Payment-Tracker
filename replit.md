@@ -1,5 +1,21 @@
 # Workspace
 
+## Project: Aman's Task & Payment Tracker
+
+Expo (React Native) mobile app + Express API + PostgreSQL/Drizzle. Modern Opulence design system (#080808 matte black, #D4AF37 gold, #F4F4F4 pearl, Satoshi fonts).
+
+**Implemented Features:**
+- Auth: Mobile+Password, JWT, bcryptjs (NO OTP)
+- Tasks: Create/update/delete with billed/received amounts, status, work_done, deadline, slip photos, history
+- Finance tab: Monthly grouped earnings, collection ratio, outstanding dues, CSV export
+- Udhaar Ledger: Passbook-style with Add/Reduce transactions, full/partial settle
+- People/Contacts tab: Aggregated view by phone, unified activity timeline per person
+- Contact Picker: expo-contacts integration for auto-filling person_name + phone in tasks + udhaar
+- Animations: Reanimated v4 — login logo zoom/pulse, staggered list entry (FadeInRight), FAB rotation+spring, card press feedback
+- DB schema: tasks(person_name, phone), udhaar(phone) columns added
+
+**Test credentials:** 9999999999 / Test@1234
+
 ## Overview
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.

@@ -15,6 +15,7 @@ export interface TransactionEntry {
 export interface Udhaar {
   id: string;
   person_name: string;
+  phone?: string;
   amount: number;
   type: UdhaarType;
   status: UdhaarStatus;
@@ -27,7 +28,7 @@ export interface Udhaar {
 interface UdhaarContextType {
   entries: Udhaar[];
   loading: boolean;
-  addUdhaar: (payload: { person_name: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => Promise<void>;
+  addUdhaar: (payload: { person_name: string; phone?: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => Promise<void>;
   addTransaction: (id: string, type: "Add" | "Reduce", amount: number, note: string) => Promise<void>;
   markFullySettled: (id: string) => Promise<void>;
   deleteUdhaar: (id: string) => Promise<void>;
@@ -64,7 +65,7 @@ export function UdhaarProvider({ children, token }: UdhaarProviderProps) {
     else { setEntries([]); setLoading(false); }
   }, [token]);
 
-  const addUdhaar = useCallback(async (payload: { person_name: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => {
+  const addUdhaar = useCallback(async (payload: { person_name: string; phone?: string; amount: number; type: UdhaarType; due_date?: string; note?: string }) => {
     if (!token) return;
     const res = await fetch(`${API_BASE}/udhaar`, { method: "POST", headers, body: JSON.stringify(payload) });
     if (res.ok) {

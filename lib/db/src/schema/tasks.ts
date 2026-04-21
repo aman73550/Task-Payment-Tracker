@@ -12,6 +12,8 @@ export const tasksTable = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
   user_id: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   task_name: text("task_name").notNull(),
+  person_name: text("person_name"),
+  phone: text("phone"),
   total_amount: integer("total_amount").notNull().default(0),
   paid_amount: integer("paid_amount").notNull().default(0),
   status: text("status").notNull().default("Pending"),

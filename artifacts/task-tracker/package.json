@@ -47,5 +47,8 @@
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
     "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "expo-contacts": "^15.0.11"
   }
 }

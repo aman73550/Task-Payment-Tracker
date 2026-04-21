@@ -25,6 +25,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "arrow.left.arrow.right", selected: "arrow.left.arrow.right" }} />
         <Label>Udhaar</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="contacts">
+        <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
+        <Label>People</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -117,6 +121,26 @@ function ClassicTabLayout() {
               <Feather name="repeat" size={21} color={color} strokeWidth={1.5} />
             ),
           tabBarLabel: "Udhaar",
+          tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
+        }}
+      />
+      <Tabs.Screen
+        name="contacts"
+        options={{
+          title: "People",
+          headerTitleStyle: {
+            color: colors.gold,
+            fontSize: 14,
+            fontFamily: "Satoshi-Black",
+            letterSpacing: 1.5,
+          },
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="person.2" tintColor={color} size={22} />
+            ) : (
+              <Feather name="users" size={21} color={color} strokeWidth={1.5} />
+            ),
+          tabBarLabel: "People",
           tabBarLabelStyle: { fontFamily: "Satoshi-Medium", fontSize: 11 },
         }}
       />

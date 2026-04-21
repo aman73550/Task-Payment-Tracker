@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 
+import ContactPickerButton from "@/components/ContactPickerButton";
 import DeadlinePicker from "@/components/DeadlinePicker";
 import { TaskStatus } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
@@ -25,6 +26,8 @@ interface AddTaskModalProps {
   onClose: () => void;
   onAdd: (slipPayload: {
     task_name: string;
+    person_name?: string;
+    phone?: string;
     total_amount: number;
     paid_amount: number;
     status: TaskStatus;
@@ -41,6 +44,8 @@ const STATUS_OPTIONS: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalProps) {
   const colors = useColors();
   const [taskName, setTaskName] = useState("");
+  const [personName, setPersonName] = useState("");
+  const [phone, setPhone] = useState("");
   const [billedAmount, setBilledAmount] = useState("");
   const [receivedAmount, setReceivedAmount] = useState("0");
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus>("Pending");
@@ -51,6 +56,8 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
 
   const resetForm = () => {
     setTaskName("");
+    setPersonName("");
+    setPhone("");
     setBilledAmount("");
     setReceivedAmount("0");
     setSelectedStatus("Pending");
@@ -92,6 +99,8 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onAdd({
       task_name: cleanName,
+      person_name: personName.trim() || undefined,
+      phone: phone.trim() || undefined,
       total_amount: totalBilled,
       paid_amount: Math.min(totalReceived, totalBilled),
       status: selectedStatus,
@@ -144,6 +153,17 @@ export default function AddTaskModal({ visible, onClose, onAdd }: AddTaskModalPr
           contentContainerStyle={styles.formContent}
           keyboardShouldPersistTaps="handled"
         >
+          <View style={styles.formField}>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>CLIENT / PERSON</Text>
+            <ContactPickerButton
+              name={personName}
+              phone={phone}
+              onNameChange={setPersonName}
+              onPhoneChange={setPhone}
+              namePlaceholder="Client name (optional)"
+            />
+          </View>
+
           <View style={styles.formField}>
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>WHAT'S THE TASK?</Text>
             <TextInput

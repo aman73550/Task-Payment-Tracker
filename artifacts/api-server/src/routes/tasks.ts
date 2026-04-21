@@ -17,6 +17,8 @@ router.post("/", async (req: Request, res: Response) => {
   const userId = (req as AuthedRequest).userId;
   const body = req.body as {
     task_name: string;
+    person_name?: string;
+    phone?: string;
     total_amount: number;
     paid_amount?: number;
     status?: string;
@@ -36,6 +38,8 @@ router.post("/", async (req: Request, res: Response) => {
   const [task] = await db.insert(tasksTable).values({
     user_id: userId,
     task_name: body.task_name,
+    person_name: body.person_name,
+    phone: body.phone,
     total_amount: body.total_amount ?? 0,
     paid_amount: body.paid_amount ?? 0,
     status: body.status ?? "Pending",

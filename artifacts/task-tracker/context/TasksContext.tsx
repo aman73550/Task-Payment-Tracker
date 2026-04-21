@@ -13,6 +13,8 @@ export interface HistoryEntry {
 export interface Task {
   id: string;
   task_name: string;
+  person_name?: string;
+  phone?: string;
   total_amount: number;
   paid_amount: number;
   status: TaskStatus;
@@ -50,6 +52,8 @@ function migrateTask(raw: any): Task {
   return {
     id: raw.id,
     task_name: raw.task_name,
+    person_name: raw.person_name ?? undefined,
+    phone: raw.phone ?? undefined,
     total_amount: raw.total_amount ?? 0,
     paid_amount: raw.paid_amount ?? 0,
     status: raw.status ?? "Pending",
